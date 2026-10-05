@@ -20,7 +20,8 @@ MINIMUM_METHODS = {
     "network_route": ({"deployment_configuration"}, {"static_trace", "local_fixture", "existing_test"}),
     "remote_write_outcome": ({"provider_contract"}, {"static_trace", "local_fixture", "existing_test"}),
     "delegation_scope": ({"static_trace", "local_fixture", "existing_test"},),
-    "human_decision": ({"static_trace", "local_fixture", "existing_test"},),
+    "human_action_binding": ({"static_trace", "local_fixture", "existing_test"},),
+    "human_persuasion": ({"owner_observation", "controlled_human_observation"},),
     "failure_propagation": ({"static_interleaving", "local_fixture", "existing_test"},),
 }
 METHOD_DIMENSIONS = {
@@ -28,7 +29,20 @@ METHOD_DIMENSIONS = {
     "local_fixture": "runtime", "existing_test": "runtime",
     "real_model_sample": "runtime", "owner_observation": "deployment",
     "deployment_configuration": "deployment", "provider_contract": "external",
+    "controlled_human_observation": "runtime",
 }
+FEATURE_REQUIREMENTS = {
+    "remote_effect": "remote_write_outcome", "network_dependent": "network_route",
+    "race_dependent": "race_interleaving", "human_dependent": "human_action_binding",
+    "human_persuasion": "human_persuasion", "distributed_sequence": "failure_propagation",
+    "model_mediated": "model_inducement", "delegated": "delegation_scope",
+}
+
+
+def mandatory_claims(features):
+    """Evidence bar is derived from explicit dependency flags, not chosen claims."""
+    return {"source_control", "attacker_entry"} | {
+        claim for feature, claim in FEATURE_REQUIREMENTS.items() if features[feature]}
 
 
 def attested_bundle_hash(bundle):
@@ -74,6 +88,25 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
                 require(record["trust"] == "unknown" or bool(record["evidence"]), "trust anchor lacks source evidence")
             if label == "assumption" and record["status"] in {"established", "refuted"}:
                 require(bool(record["evidence"]) or bool(record["reference"]), "assumption lacks evidence/reference")
+            if label == "capability":
+                require(set(record["assumption_ids"]) <= assumptions.keys(), "capability references unknown assumption")
+                dependent = [assumptions[aid] for aid in record["assumption_ids"] if aid in assumptions]
+                if record["status"] in {"established", "refuted"}:
+                    require(bool(record["evidence"]), "decisive capability lacks ingress evidence")
+                if record["status"] == "established":
+                    require(all(a["status"] == "established" for a in dependent), "established capability relies on unresolved/refuted assumption")
+                if record["deployment_dependent"]:
+                    require(meta["assurance"]["deployment"]["status"] != "not_applicable", "deployment-dependent capability cannot be marked absent")
+                    if record["status"] in {"established", "refuted"}:
+                        allowed = {"established"} if record["status"] == "established" else {"established", "refuted"}
+                        require(any(a["dimension"] == "deployment" and a["status"] in allowed for a in dependent),
+                                "decisive deployment capability lacks deployment assumption")
+                        require(bool(record["deployment_evidence"]), "decisive deployment capability lacks config evidence")
+                    else:
+                        require(meta["assurance"]["deployment"]["status"] != "assessed", "deployment assurance hides unresolved capability")
+                if record["deployment_evidence"]:
+                    require(meta["assurance"]["deployment"]["status"] in {"partial", "assessed"},
+                            "capability config evidence conflicts with deployment assurance")
     for agent in meta["agents"]:
         require(agent["threat_model_hash"] == threat_hash, f"agent {agent['id']}: threat model differs")
     for critic in meta["coverage_reviews"]:
@@ -102,6 +135,10 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
         require(set(candidate["assumption_ids"]) <= assumptions.keys(), f"{cid}: unknown threat assumption")
         require(bool(candidate["capability_ids"]) and set(candidate["capability_ids"]) <= capabilities.keys(),
                 f"{cid}: attacker capability missing/unknown")
+        for capid in candidate["capability_ids"]:
+            if capid in capabilities:
+                require(set(capabilities[capid]["assumption_ids"]) <= set(candidate["assumption_ids"]),
+                        f"{cid}: capability hides necessary assumption")
         invariants = {candidate["primary_invariant"], *candidate["contributing_invariants"]}
         require(candidate["primary_invariant"] not in candidate["contributing_invariants"], f"{cid}: primary repeated as contributor")
         for invariant in invariants:
@@ -140,7 +177,15 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
         requirements = candidate["minimum_evidence"]
         require(len({r["id"] for r in requirements}) == len(requirements), f"{cid}: duplicate evidence requirement")
         claims = {r["claim"] for r in requirements}
-        require({"source_control", "attacker_entry"} <= claims, f"{cid}: mandatory evidence requirements missing")
+        features = candidate["claim_features"]
+        for claim in sorted(mandatory_claims(features) - claims):
+            require(False, f"{cid}: mandatory evidence requirements missing: {claim}")
+        require(features["model_mediated"] == (candidate["attacker_route"] == "model_mediated"),
+                f"{cid}: model feature differs from attacker route")
+        require(features["delegated"] == bool(delegations), f"{cid}: delegated feature differs from provenance")
+        require(not features["human_persuasion"] or features["human_dependent"], f"{cid}: persuasion hides human dependency")
+        for feature, claim in FEATURE_REQUIREMENTS.items():
+            require(claim not in claims or features[feature], f"{cid}: evidence claim has disabled feature: {feature}")
         if candidate["attacker_route"] == "model_mediated":
             require("model_inducement" in claims, f"{cid}: model-mediated entry lacks inducement requirement")
         if delegations:
@@ -157,6 +202,14 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
         entries = {e["id"]: e for e in finding["validation"]}
         requirements = {r["id"]: r for r in finding["minimum_evidence"]}
         results = {r["requirement_id"]: r for r in finding["requirement_results"]}
+        used_caps = [capabilities[cid] for cid in finding["capability_ids"] if cid in capabilities]
+        necessary = [assumptions[aid] for aid in finding["assumption_ids"] if aid in assumptions] + used_caps
+        refuted_dependency = any(d["status"] == "refuted" for d in necessary)
+        require(not refuted_dependency or finding["confidence"] == "rejected", f"{fid}: refuted necessary dependency requires rejection")
+        if finding["attacker_reachability"]["status"] == "established":
+            require(all(c["status"] == "established" for c in used_caps), f"{fid}: attacker reachability uses unestablished capability")
+        if any(c["status"] in {"assumed", "unknown"} for c in used_caps):
+            require(finding["attacker_reachability"]["status"] == "unresolved", f"{fid}: unknown capability requires unresolved attacker reachability")
         require(len(entries) == len(finding["validation"]), f"{fid}: duplicate validation evidence ID")
         require(len(results) == len(finding["requirement_results"]) and results.keys() == requirements.keys(),
                 f"{fid}: evidence requirement dispositions differ")
@@ -189,14 +242,21 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
             if rid not in requirements:
                 continue
             requirement = requirements[rid]
+            dependencies = [assumptions[aid] for aid in requirement["assumption_ids"] if aid in assumptions]
+            if requirement["claim"] == "attacker_entry":
+                dependencies += used_caps
+            refuted = any(d["status"] == "refuted" for d in dependencies)
+            require(not refuted or result["status"] == "refuted", f"{fid}: refuted dependency requires refuted requirement")
             selected = [entries[eid] for eid in result["evidence_ids"] if eid in entries]
             require(set(result["evidence_ids"]) <= entries.keys(), f"{fid}: requirement references unknown evidence")
             require(all(rid in e["proves"] for e in selected), f"{fid}: evidence not bound to requirement")
             if result["status"] in {"satisfied", "refuted"}:
-                require(bool(selected) and not result["missing_facts"], f"{fid}: requirement lacks decisive evidence")
+                require((bool(selected) or (result["status"] == "refuted" and refuted))
+                        and not result["missing_facts"], f"{fid}: requirement lacks decisive evidence")
             else:
                 require(bool(result["missing_facts"]), f"{fid}: unresolved requirement lacks missing fact")
             if result["status"] == "satisfied":
+                require(all(d["status"] == "established" for d in dependencies), f"{fid}: satisfied requirement relies on unresolved assumption/capability")
                 methods = {e["method"] for e in selected}
                 require(all(methods & group for group in MINIMUM_METHODS[requirement["claim"]]),
                         f"{fid}: minimum evidence not met for {requirement['claim']}")
@@ -212,6 +272,7 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
             if finding["confidence"] == "confirmed":
                 require(result["status"] == "satisfied", f"{fid}: confirmed has unmet evidence requirement")
         if finding["confidence"] == "confirmed":
+            require(all(c["status"] == "established" for c in used_caps), f"{fid}: confirmed uses unestablished attacker capability")
             for aid in finding["assumption_ids"]:
                 if aid in assumptions:
                     require(assumptions[aid]["status"] == "established", f"{fid}: confirmed depends on unresolved threat assumption")
@@ -222,7 +283,7 @@ def validate_claims(bundle, require, locations, trusted_host_keys=None):
                     f"{fid}: needs-validation lacks structured unresolved fact")
         if finding["confidence"] == "rejected":
             require(any(finding[k]["status"] == "refuted" for k in ("attacker_reachability", "effect_reachability"))
-                    or any(r["status"] == "refuted" for r in results.values()),
+                    or any(r["status"] == "refuted" for r in results.values()) or refuted_dependency,
                     f"{fid}: rejection lacks structured refutation")
 
     receipt = meta["host_attestation"]

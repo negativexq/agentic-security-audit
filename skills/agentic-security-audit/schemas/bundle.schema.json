@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Agentic Security Audit v3 bundle",
+  "title": "Agentic Security Audit v4 bundle",
   "type": "object",
   "additionalProperties": false,
   "required": ["metadata", "ledger", "candidates", "findings", "source_manifest", "threat_model"],
@@ -55,7 +55,7 @@
       "additionalProperties": false,
       "required": ["method", "reference", "result", "limitations", "execution_id", "id", "proves", "source_locations"],
       "properties": {
-        "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation", "deployment_configuration", "provider_contract", "real_model_sample", "static_interleaving"]},
+        "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation", "deployment_configuration", "provider_contract", "real_model_sample", "static_interleaving", "controlled_human_observation"]},
         "reference": {"$ref": "#/$defs/text"},
         "result": {"$ref": "#/$defs/text"},
         "limitations": {"$ref": "#/$defs/texts"},
@@ -82,7 +82,7 @@
       "additionalProperties": false,
       "required": ["schema_version", "run_id", "repository", "revision", "working_tree", "scope", "exclusions", "run_status", "incomplete_reason", "independence", "agents", "budget", "final_review", "evidence_slices", "limitations", "source_manifest_hash", "audit_mode", "allow_in_target_output", "execution_policy", "execution_runs", "coverage_reviews", "threat_model_hash", "assurance", "independence_level", "host_attestation"],
       "properties": {
-        "schema_version": {"const": 3},
+        "schema_version": {"const": 4},
         "run_id": {"$ref": "#/$defs/text"},
         "repository": {"$ref": "#/$defs/text"},
         "revision": {"$ref": "#/$defs/text"},
@@ -183,7 +183,7 @@
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "status", "fingerprint", "unit_ids", "title", "root_cause", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "counterevidence", "source_manifest_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_route"],
+      "required": ["id", "status", "fingerprint", "unit_ids", "title", "root_cause", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "counterevidence", "source_manifest_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_route", "claim_features"],
       "properties": {
         "id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
         "status": {"enum": ["pending", "adjudicated"]},
@@ -225,13 +225,14 @@
         "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "assumption_ids": {"$ref": "#/$defs/texts"},
         "capability_ids": {"$ref": "#/$defs/texts"},
-        "attacker_route": {"enum": ["direct_input", "model_mediated"]}
+        "attacker_route": {"enum": ["direct_input", "model_mediated"]},
+        "claim_features": {"$ref": "#/$defs/claimFeatures"}
       }
     },
     "finding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "candidate_id", "unit_ids", "fingerprint", "title", "confidence", "severity", "severity_rationale", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "verifier_id", "verifier_evidence", "validation", "counterevidence", "missing_fact", "validation_plan", "rejection_reason", "recommendation", "regression_assertion", "source_manifest_hash", "verified_candidate_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_reachability", "effect_reachability", "requirement_results", "attacker_route"],
+      "required": ["id", "candidate_id", "unit_ids", "fingerprint", "title", "confidence", "severity", "severity_rationale", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "verifier_id", "verifier_evidence", "validation", "counterevidence", "missing_fact", "validation_plan", "rejection_reason", "recommendation", "regression_assertion", "source_manifest_hash", "verified_candidate_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_reachability", "effect_reachability", "requirement_results", "attacker_route", "claim_features"],
       "properties": {
         "id": {"type": "string", "pattern": "^AGENT-[0-9]{3,}$"},
         "candidate_id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
@@ -293,7 +294,8 @@
           "type": "array",
           "items": {"$ref": "#/$defs/requirementResult"}
         },
-        "attacker_route": {"enum": ["direct_input", "model_mediated"]}
+        "attacker_route": {"enum": ["direct_input", "model_mediated"]},
+        "claim_features": {"$ref": "#/$defs/claimFeatures"}
       }
     },
     "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
@@ -417,12 +419,19 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "description", "anchor_ids", "evidence"],
+            "required": ["id", "description", "anchor_ids", "evidence", "status", "assumption_ids", "deployment_dependent", "deployment_evidence"],
             "properties": {
               "id": {"$ref": "#/$defs/text"},
               "description": {"$ref": "#/$defs/text"},
               "anchor_ids": {"$ref": "#/$defs/texts"},
-              "evidence": {"$ref": "#/$defs/locations"}
+              "evidence": {"$ref": "#/$defs/locations"},
+              "status": {"enum": ["established", "assumed", "unknown", "refuted"]},
+              "assumption_ids": {"$ref": "#/$defs/texts"},
+              "deployment_dependent": {"type": "boolean"},
+              "deployment_evidence": {
+                "type": "array",
+                "items": {"$ref": "#/$defs/deploymentReceipt"}
+              }
             }
           }
         },
@@ -493,7 +502,7 @@
       "required": ["id", "claim", "description", "step_id", "assumption_ids"],
       "properties": {
         "id": {"$ref": "#/$defs/text"},
-        "claim": {"enum": ["source_control", "attacker_entry", "model_inducement", "race_interleaving", "network_route", "remote_write_outcome", "delegation_scope", "human_decision", "failure_propagation"]},
+        "claim": {"enum": ["source_control", "attacker_entry", "model_inducement", "race_interleaving", "network_route", "remote_write_outcome", "delegation_scope", "failure_propagation", "human_action_binding", "human_persuasion"]},
         "description": {"$ref": "#/$defs/text"},
         "step_id": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
         "assumption_ids": {"$ref": "#/$defs/texts"}
@@ -565,6 +574,34 @@
           }
         },
         "signature": {"type": "string", "pattern": "^[a-f0-9]{128}$"}
+      }
+    },
+    "claimFeatures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote_effect", "network_dependent", "race_dependent", "human_dependent", "human_persuasion", "distributed_sequence", "model_mediated", "delegated"],
+      "properties": {
+        "remote_effect": {"type": "boolean"},
+        "network_dependent": {"type": "boolean"},
+        "race_dependent": {"type": "boolean"},
+        "human_dependent": {"type": "boolean"},
+        "human_persuasion": {"type": "boolean"},
+        "distributed_sequence": {"type": "boolean"},
+        "model_mediated": {"type": "boolean"},
+        "delegated": {"type": "boolean"}
+      }
+    },
+    "deploymentReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "reference", "sha256", "environment", "result", "limitations"],
+      "properties": {
+        "method": {"const": "deployment_configuration"},
+        "reference": {"$ref": "#/$defs/text"},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "environment": {"$ref": "#/$defs/text"},
+        "result": {"$ref": "#/$defs/text"},
+        "limitations": {"$ref": "#/$defs/texts"}
       }
     }
   }

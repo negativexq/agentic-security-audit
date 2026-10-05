@@ -23,6 +23,7 @@ Links below are relative to the repository root. A website publisher should pres
 - [Orchestration](skills/agentic-security-audit/references/orchestration.md): Hunter roles, context isolation and verifier/reviewer prompts.
 - [Artifact contract](skills/agentic-security-audit/references/artifact-contract.md): Record fields, evidence requirements and helper commands.
 - [Claim and evidence rules](skills/agentic-security-audit/references/claim-evidence.md): Threat models, composite chains, separate reachability, minimum evidence, assurance dimensions and optional signed host receipts.
+- Candidate feature flags derive mandatory evidence; capability states and deployment receipts constrain attacker entry. Necessary refuted dependencies require rejection. Human action binding and observed persuasion have separate claim types.
 - [Bundle schema](skills/agentic-security-audit/schemas/bundle.schema.json): Machine-readable structure for metadata, coverage, candidates and findings.
 
 ## Optional

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from test_audit_contract import complete_fixture, evidence, write_bundle
 from audit_integrity import ALLEGATION_FIELDS, candidate_hash, canonical_hash
-from audit_claims import attested_bundle_hash, load_trusted_keys
+from audit_claims import FEATURE_REQUIREMENTS, attested_bundle_hash, load_trusted_keys
 from render_report import render
 from validate_audit import fingerprint, validate_bundle, validate_directory
 
@@ -34,6 +34,9 @@ def refresh_threat(bundle):
 
 
 def add_requirement(bundle, claim, rid="REQ-SPECIAL"):
+    for feature, requirement_claim in FEATURE_REQUIREMENTS.items():
+        if requirement_claim == claim:
+            bundle["candidates"][0]["claim_features"][feature] = True
     bundle["candidates"][0]["minimum_evidence"].append({
         "id": rid, "claim": claim, "description": "Bounded synthetic claim", "step_id": None, "assumption_ids": []})
     finding = bundle["findings"][0]
@@ -88,6 +91,134 @@ class ClaimIntegrityTests(unittest.TestCase):
         self.assertIn("| runtime | not_assessed", report)
         self.assertIn("| deployment | not_assessed", report)
         self.assertIn("| external | not_assessed", report)
+
+    def test_decisive_capability_requires_ingress_evidence(self):
+        self.bundle["threat_model"]["attacker_capabilities"][0]["evidence"] = []
+        refresh_threat(self.bundle)
+        self.invalid("decisive capability lacks ingress evidence")
+
+    def test_unknown_capability_blocks_confirmation_and_established_entry(self):
+        cap = self.bundle["threat_model"]["attacker_capabilities"][0]
+        cap.update(status="unknown", evidence=[])
+        refresh_threat(self.bundle)
+        self.invalid("confirmed uses unestablished attacker capability")
+        self.invalid("attacker reachability uses unestablished capability")
+        finding = self.bundle["findings"][0]
+        finding.update(confidence="needs_validation", severity=None, severity_rationale=None,
+                       missing_fact="Ingress access unknown", validation_plan="Inspect owner routing")
+        finding["attacker_reachability"].update(status="unresolved", evidence_ids=[], missing_facts=["Ingress access"])
+        self.invalid("satisfied requirement relies on unresolved assumption/capability")
+        finding["requirement_results"][0].update(status="unresolved", evidence_ids=[], missing_facts=["Ingress access"])
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_source_ingress_does_not_prove_production_endpoint_exposure(self):
+        cap = self.bundle["threat_model"]["attacker_capabilities"][0]
+        cap["deployment_dependent"] = True
+        refresh_threat(self.bundle)
+        self.invalid("decisive deployment capability lacks deployment assumption")
+        self.invalid("decisive deployment capability lacks config evidence")
+        self.bundle["threat_model"]["assumptions"] = [{"id": "public-route", "statement": "Fixture ingress accessible in named environment",
+            "status": "established", "dimension": "deployment", "anchor_ids": ["user-input"], "evidence": [], "reference": "Frozen synthetic routing config"}]
+        cap["assumption_ids"] = ["public-route"]
+        cap["deployment_evidence"] = [{"method": "deployment_configuration", "reference": "Owner-frozen synthetic routes",
+            "sha256": "c" * 64, "environment": "isolated synthetic environment", "result": "Route available to fixture caller", "limitations": ["Not a real deployment"]}]
+        self.bundle["metadata"]["assurance"]["deployment"] = {"status": "partial", "basis": ["Frozen fixture routes"], "limitations": ["Synthetic only"]}
+        refresh_threat(self.bundle)
+        self.invalid("capability hides necessary assumption")
+        self.bundle["candidates"][0]["assumption_ids"] = ["public-route"]
+        refresh_allegation(self.bundle)
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_every_feature_derives_a_mandatory_requirement(self):
+        for feature, claim in FEATURE_REQUIREMENTS.items():
+            with self.subTest(feature=feature):
+                bundle = complete_fixture()
+                bundle["candidates"][0]["claim_features"][feature] = True
+                refresh_allegation(bundle)
+                self.assertTrue(any("mandatory evidence requirements missing: " + claim in e for e in validate_bundle(bundle)))
+
+    def test_feature_declaration_is_required_and_receipt_bound(self):
+        self.bundle["candidates"][0].pop("claim_features")
+        self.invalid("'claim_features' is a required property")
+        self.bundle = complete_fixture()
+        self.bundle["candidates"][0]["claim_features"]["network_dependent"] = True
+        self.bundle["findings"][0]["claim_features"]["network_dependent"] = True
+        self.invalid("verified candidate snapshot differs")
+
+    def test_requirements_cannot_hide_a_known_feature(self):
+        add_requirement(self.bundle, "network_route")
+        self.bundle["candidates"][0]["claim_features"]["network_dependent"] = False
+        refresh_allegation(self.bundle)
+        self.invalid("evidence claim has disabled feature: network_dependent")
+
+    def test_model_and_delegation_flags_must_match_structured_paths(self):
+        self.bundle["candidates"][0]["attacker_route"] = "model_mediated"
+        refresh_allegation(self.bundle)
+        self.invalid("model feature differs from attacker route")
+        self.bundle["candidates"][0]["claim_features"]["delegated"] = True
+        refresh_allegation(self.bundle)
+        self.invalid("delegated feature differs from provenance")
+
+    def refuted_assumption(self):
+        self.bundle["threat_model"]["assumptions"] = [{"id": "required-source-fact", "statement": "Necessary route enabled",
+            "status": "refuted", "dimension": "source", "anchor_ids": ["user-input"], "evidence": [evidence()], "reference": None}]
+        self.bundle["candidates"][0]["assumption_ids"] = ["required-source-fact"]
+        refresh_threat(self.bundle)
+
+    def reject(self):
+        self.bundle["findings"][0].update(confidence="rejected", severity=None, severity_rationale=None,
+            missing_fact=None, validation_plan=None, rejection_reason="Necessary precondition refuted", counterevidence=["Synthetic necessary source fact is false"])
+
+    def test_refuted_necessary_assumption_requires_rejection_even_with_unknown_axis(self):
+        self.refuted_assumption()
+        self.invalid("refuted necessary dependency requires rejection")
+        finding = self.bundle["findings"][0]
+        finding.update(confidence="needs_validation", severity=None, severity_rationale=None, missing_fact="Other unknown", validation_plan="Inspect other route")
+        finding["effect_reachability"].update(status="unresolved", missing_facts=["Other unknown"])
+        self.invalid("refuted necessary dependency requires rejection")
+        self.reject()
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_requirement_dependency_refutation_propagates_without_invented_evidence(self):
+        self.refuted_assumption()
+        self.bundle["candidates"][0]["minimum_evidence"][1]["assumption_ids"] = ["required-source-fact"]
+        refresh_allegation(self.bundle)
+        self.reject()
+        self.invalid("refuted dependency requires refuted requirement")
+        self.bundle["findings"][0]["requirement_results"][1].update(status="refuted", evidence_ids=[], rationale="Necessary source assumption refuted by threat-model evidence")
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_refuted_capability_can_defeat_entry_without_fabricated_requirement_evidence(self):
+        self.bundle["threat_model"]["attacker_capabilities"][0]["status"] = "refuted"
+        refresh_threat(self.bundle)
+        self.reject()
+        finding = self.bundle["findings"][0]
+        finding["attacker_reachability"]["status"] = "refuted"
+        finding["requirement_results"][0].update(status="refuted", evidence_ids=[], rationale="Capability refuted by ingress evidence")
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_human_persuasion_cannot_be_proved_by_static_trace_or_software_test(self):
+        add_requirement(self.bundle, "human_action_binding", "REQ-HUMAN-BINDING")
+        add_requirement(self.bundle, "human_persuasion", "REQ-HUMAN-PERSUASION")
+        self.invalid("minimum evidence not met for human_persuasion")
+        finding = self.bundle["findings"][0]
+        finding["validation"].append({"id": "EVID-HUMAN", "method": "controlled_human_observation",
+            "reference": "Frozen synthetic controlled participant observation", "result": "Observed bounded human approval under misleading evidence",
+            "limitations": ["Synthetic receipt, no actual participants; no general persuasion claim"], "execution_id": None,
+            "proves": ["REQ-HUMAN-PERSUASION"], "source_locations": []})
+        finding["requirement_results"][-1]["evidence_ids"] = ["EVID-HUMAN"]
+        self.bundle["metadata"]["assurance"]["runtime"] = {"status": "partial", "basis": ["Controlled receipt inspected"], "limitations": ["Synthetic contract example"]}
+        self.assertEqual(validate_bundle(self.bundle), [])
+        finding["validation"][-1]["method"] = "owner_observation"
+        self.bundle["metadata"]["assurance"]["deployment"] = {"status": "partial", "basis": ["Owner observation receipt"], "limitations": ["Synthetic only"]}
+        self.assertEqual(validate_bundle(self.bundle), [])
+
+    def test_persuasion_cannot_disable_human_action_binding_dependency(self):
+        add_requirement(self.bundle, "human_persuasion")
+        self.invalid("persuasion hides human dependency")
+        self.bundle["candidates"][0]["claim_features"]["human_dependent"] = True
+        refresh_allegation(self.bundle)
+        self.invalid("mandatory evidence requirements missing: human_action_binding")
 
     def test_source_complete_needs_source_assurance_and_trust_map(self):
         self.bundle["metadata"]["assurance"]["source"]["status"] = "partial"
@@ -159,8 +290,8 @@ class ClaimIntegrityTests(unittest.TestCase):
         add_requirement(self.bundle, "failure_propagation")
         self.invalid("minimum evidence not met for failure_propagation")
 
-    def test_human_decision_requires_a_bound_claim_disposition(self):
-        add_requirement(self.bundle, "human_decision")
+    def test_human_binding_requires_a_bound_claim_disposition(self):
+        add_requirement(self.bundle, "human_action_binding")
         self.assertEqual(validate_bundle(self.bundle), [])
         self.bundle["findings"][0]["requirement_results"][-1].update(status="unresolved", missing_facts=["Operator action preview unknown"])
         self.invalid("confirmed has unmet evidence requirement")

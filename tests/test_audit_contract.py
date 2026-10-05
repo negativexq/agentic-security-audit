@@ -32,7 +32,8 @@ def complete_fixture() -> dict:
     bundle["threat_model"].update(anchors=[{"id": "user-input", "component": "fixture request",
         "trust": "untrusted", "rationale": "Caller controls resource ID", "evidence": [evidence()]}],
         attacker_capabilities=[{"id": "request-control", "description": "Authenticated caller directly supplies resource ID",
-                                "anchor_ids": ["user-input"], "evidence": [evidence()]}], limitations=["Synthetic fixture only."])
+                                "anchor_ids": ["user-input"], "evidence": [evidence()], "status": "established",
+                                "assumption_ids": [], "deployment_dependent": False, "deployment_evidence": []}], limitations=["Synthetic fixture only."])
     threat_digest = canonical_hash(bundle["threat_model"])
     bundle["metadata"]["threat_model_hash"] = threat_digest
     bundle["metadata"]["assurance"]["source"] = {"status": "assessed", "basis": ["Frozen synthetic source inspected"], "limitations": []}
@@ -78,6 +79,7 @@ def complete_fixture() -> dict:
         "counterevidence": ["Input shape validated; scope not checked"],
         "threat_model_hash": threat_digest, "contributing_invariants": [], "exploit_chain": [],
         "delegation_provenance": [], "assumption_ids": [], "capability_ids": ["request-control"], "attacker_route": "direct_input",
+        "claim_features": {k: False for k in ("remote_effect", "network_dependent", "race_dependent", "human_dependent", "human_persuasion", "distributed_sequence", "model_mediated", "delegated")},
         "minimum_evidence": [
             {"id": "REQ-ENTRY", "claim": "attacker_entry", "description": "Caller can supply target ID", "step_id": None, "assumption_ids": []},
             {"id": "REQ-CONTROL", "claim": "source_control", "description": "Unchecked ID reaches write", "step_id": None, "assumption_ids": []}]}
@@ -87,7 +89,7 @@ def complete_fixture() -> dict:
     copied = ["fingerprint", "unit_ids", "title", "primary_invariant", "source", "control", "sink", "attacker",
               "principal", "execution_identity", "affected_resource", "boundary", "control_failure",
               "impact", "preconditions", "counterevidence", "source_manifest_hash", "threat_model_hash",
-              "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route"]
+              "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route", "claim_features"]
     finding = {key: copy.deepcopy(candidate[key]) for key in copied}
     finding.update({
         "id": "AGENT-001", "candidate_id": "CAND-001", "confidence": "confirmed",
@@ -310,7 +312,10 @@ class AuditContractTests(unittest.TestCase):
                 bundle = complete_fixture()
                 value = bundle["findings"][0][field]
                 if isinstance(value, dict):
-                    value["summary"] = "Different claimed control/effect"
+                    if field == "claim_features":
+                        value["remote_effect"] = True
+                    else:
+                        value["summary"] = "Different claimed control/effect"
                 elif isinstance(value, list):
                     if field == "contributing_invariants":
                         value.append("AGENT-INV-001")

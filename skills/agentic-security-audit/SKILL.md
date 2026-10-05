@@ -48,6 +48,8 @@ Each hunter searches for a violated invariant, follows the full source-to-effect
 
 ## 4. Gate candidates
 
+Declare every `claim_features` flag explicitly from the source path: remote write outcome, actual network route, race, human action binding/persuasion, distributed sequence, model mediation and delegation. The validator derives mandatory requirement types from those flags. Independently challenge omitted/false flags rather than lowering the evidence bar to generic source traces. Bind capability status and inherited assumptions; source ingress alone cannot establish deployment-dependent access.
+
 Use `primary_invariant`; record optional composite contributors as an empty or populated `contributing_invariants` array and an ordered `exploit_chain`. Each necessary step needs matching coverage, connected authority states and its own evidence requirement. Keep independently fixable causes distinct and avoid counting aggregate impact twice. Record delegated authority origins and scope attenuation in `delegation_provenance`. Bind candidate assumptions, attacker capabilities, `attacker_route` and claim-specific `minimum_evidence` before verification.
 
 Admit a candidate only with **attacker-controlled source + crossed boundary + broken/missing authoritative control + reachable security effect**. Name attacker, affected principal/resource, effective identity and necessary preconditions. Same-principal self-impact and an intentional authorized request are not confused-deputy defects. An unwanted action using a victim's valid permissions can still violate action binding.
@@ -59,6 +61,8 @@ Store admitted records in `candidates.json`, with source/control/sink evidence, 
 Freeze the candidate allegation with `audit_integrity.candidate_hash(candidate)` (all fields except mutable `status`). Give the exact candidate and hash to a fresh verifier who did not hunt it. The verifier returns `verified_candidate_hash`; the parent copies allegation fields unchanged into the finding. Correct a mistaken allegation in the candidate and obtain fresh verification; do not change its impact, principal, trace or preconditions only in the final record. Hashes detect drift, not forged attestations. Use [verifier prompts and verdict rules](references/orchestration.md); require independent source inspection and a search for defeating controls. A controlled direct proposal can prove a deterministic dispatch defect; it does not prove an external attacker can cause that proposal through a particular model. State that missing reachability fact explicitly.
 
 Verifier verdicts:
+
+Required attacker capabilities must be established for confirmation and established attacker reachability. Deployment-dependent capabilities also need established deployment assumptions and configuration receipts. Unknown capability keeps attacker entry unresolved. Any refuted necessary assumption/capability requires rejection, even if another fact remains unknown; propagate its refutation into dependent requirements. Separate technical `human_action_binding` from behavioral `human_persuasion`; persuasion requires bounded observed human evidence.
 
 - `confirmed`: complete source trace plus bounded evidence of the claimed effect under stated preconditions; severity follows demonstrated impact.
 - `needs_validation`: a specific source-grounded hypothesis with an exact unresolved runtime/deployment/provider fact and a bounded owner/local check. Severity is null.

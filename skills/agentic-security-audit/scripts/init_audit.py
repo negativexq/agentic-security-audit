@@ -27,7 +27,7 @@ def initial_bundle(repository: str, scope: list[str], working_tree: str,
     threat_digest = canonical_hash(threat_model)
     return {
         "metadata": {
-            "schema_version": 3, "run_id": f"audit-{uuid4().hex[:12]}",
+            "schema_version": 4, "run_id": f"audit-{uuid4().hex[:12]}",
             "repository": repository, "revision": manifest["git_commit"] or digest, "working_tree": working_tree,
             "source_manifest_hash": digest, "audit_mode": audit_mode,
             "allow_in_target_output": allow_in_target,

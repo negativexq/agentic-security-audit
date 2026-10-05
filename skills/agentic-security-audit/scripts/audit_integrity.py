@@ -25,7 +25,7 @@ ALLEGATION_FIELDS = (
     "execution_identity", "affected_resource", "boundary", "control_failure",
     "impact", "preconditions", "source_manifest_hash", "threat_model_hash",
     "contributing_invariants", "exploit_chain", "delegation_provenance",
-    "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route",
+    "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route", "claim_features",
 )
 COVERAGE_FIELDS = ("subsystem", "boundary", "path_variant", "attack_class", "invariant")
 

@@ -1,4 +1,4 @@
-# Artifact contract v3
+# Artifact contract v4
 
 The authority map is the planning input; the ledger is the coverage record; candidates are allegations; findings are independently adjudicated dispositions. Keep all four distinct. Machine structure is defined by [bundle.schema.json](../schemas/bundle.schema.json). The validator checks schema, cross-links, coverage state, declared role independence, dispositions, budget accounting and exact report derivation, source snapshot bindings, candidate allegation integrity, attack-class/invariant routing and coverage critic accounting. It cannot attest source correctness, real context isolation or exhaustive coverage.
 
@@ -19,7 +19,7 @@ Initialization captures `source-manifest.json` from a local source directory usi
 
 `source_manifest_hash` is SHA-256 over project canonical JSON: sorted object keys, compact separators, UTF-8, unchanged array order, no Unicode normalization or nonfinite numbers. Use `audit_integrity.canonical_hash`. Every declared agent, candidate, finding, execution, critique and final review binds that hash. Recompute actual source before each independent pass and final review; drift requires a new run. Helpers rehash by default; `--source-root` supplies a relocated copy and `--offline` checks archived structure only. Helpers do not launch agents, run target tests or attest sandbox enforcement. Source paths must exist in the manifest; line/symbol correctness remains independently inspected.
 
-Version 3 is intentionally incompatible with v1/v2 bundles. Reassess threat models, reachability axes, dependencies and composite paths; do not synthesize evidence or upgrade prior confirmation by adding empty fields. Read [claim and evidence rules](claim-evidence.md) before constructing records. Optional signed host receipts require the attestation dependency and externally pinned public keys.
+Version 4 is intentionally incompatible with v1–v3 bundles. Reassess capability states, deployment-dependent access, explicit claim features and human claim types; do not fill defaults or retroactively upgrade confirmation. Read [claim and evidence rules](claim-evidence.md) before constructing records. Optional signed host receipts require the attestation dependency and externally pinned public keys.
 
 ## Maps
 
@@ -32,6 +32,8 @@ Arrays in `coverage-ledger.json` preserve stable `AUTH-001`-style IDs. Include s
 `reviewed` means an evidence-backed scoped pass was completed; it does not mean no vulnerability exists. `candidate` means a reviewed unit has an unresolved admitted allegation. After all dispositions, set it to `reviewed` and retain candidate links. `blocked`/`deferred` require reasons, `not_applicable` requires inspected absence. Unknown provider behavior is not `not_applicable`.
 
 ## Candidates and findings
+
+Candidate `claim_features` declares all dependency flags explicitly. The validator derives required claim types; the hunter cannot lower that bar by omitting a requirement. Flags must match structured model/delegation paths and present claim types, and remain immutable in findings. Source interpretation and falsely omitted dependencies still require independent challenge. Human action binding and observed persuasion use separate claim types and evidence methods.
 
 Candidate gate fields: `source`, `control`, `sink`, `attacker`, affected `principal`, `execution_identity`, `affected_resource`, `boundary`, `control_failure`, `impact`, `preconditions`, `counterevidence`, `primary_invariant` and linked units. Also record `contributing_invariants`, `exploit_chain`, `delegation_provenance`, `minimum_evidence`, `attacker_route`, `assumption_ids`, `capability_ids` and `threat_model_hash` according to [claim-evidence.md](claim-evidence.md). Empty chains/contributors/delegation arrays represent a single-control claim. `control` cites the defective/expected enforcement location, including a dispatcher where a check is absent. Do not fabricate a nonexistent source line.
 

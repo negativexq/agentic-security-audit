@@ -126,6 +126,9 @@ def render(bundle: dict) -> dict[str, str]:
             details += [f"- {axis}: {reach['status']} — {md(reach['claim'])}; evidence: {md(', '.join(reach['evidence_ids']))}.",
                         f"  Missing facts: {md('; '.join(reach['missing_facts']) or 'none')}."]
         details += ["", "### Minimum evidence", ""]
+        from audit_claims import mandatory_claims
+        details += [f"Enabled claim features: {md(', '.join(k for k, enabled in finding['claim_features'].items() if enabled) or 'none')}.", "",
+                    f"Derived mandatory claims: {md(', '.join(sorted(mandatory_claims(finding['claim_features']))))}.", ""]
         requirements = {r["id"]: r for r in finding["minimum_evidence"]}
         for result in finding["requirement_results"]:
             requirement = requirements[result["requirement_id"]]
@@ -163,8 +166,12 @@ def render(bundle: dict) -> dict[str, str]:
         model += [f"  - {location(loc)}" for loc in assumption["evidence"]]
     model += ["", "## Attacker capabilities", ""]
     for capability in threat["attacker_capabilities"]:
-        model += [f"- {md(capability['id'])}: {md(capability['description'])}; anchors: {md(', '.join(capability['anchor_ids']))}."]
+        model += [f"- {md(capability['id'])}: {capability['status']} — {md(capability['description'])}; anchors: {md(', '.join(capability['anchor_ids']))}.",
+                  f"  Deployment-dependent: {capability['deployment_dependent']}; assumptions: {md(', '.join(capability['assumption_ids']) or 'none')}."]
         model += [f"  - {location(loc)}" for loc in capability["evidence"]]
+        for receipt in capability["deployment_evidence"]:
+            model += [f"  - Configuration: {md(receipt['reference'])}; SHA-256: {receipt['sha256']}; environment: {md(receipt['environment'])}.",
+                      f"    Result: {md(receipt['result'])}. Limits: {md('; '.join(receipt['limitations']) or 'none recorded')}."]
     model += ["", "## Limitations", "", bullet_list(threat["limitations"]), ""]
     return {"REPORT.md": "\n".join(report), "FINDINGS-DETAIL.md": "\n".join(details), "threat-model.md": "\n".join(model)}
 

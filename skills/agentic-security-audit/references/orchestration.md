@@ -58,6 +58,9 @@ Recheck and return source_manifest_hash. Execute only under the full OS-enforced
 execution safety contract; otherwise use static evidence. Use synthetic checks; do not mutate external systems or target source.
 Recheck threat_model_hash; name necessary assumptions and attacker capabilities.
 Select minimum_evidence by the actual claim, not just its attack-class label.
+Declare every claim_features flag; use mandatory_claims to derive the evidence bar.
+Trace capability state and deployment-dependent ingress; a source handler is not
+proof of public exposure. Bind all inherited capability assumptions.
 For composites return connected steps and coverage links; for delegation trace
 who granted which scope to whom and which effective scope reached the effect.
 Return for each unit: inspected locations, controls, result, gaps and candidates.
@@ -76,6 +79,10 @@ Inspect source independently from source through dispatch, handler and final sin
 Look for controls that defeat the alleged result and for unmet attacker preconditions.
 Distinguish deterministic-proposal reachability from attacker-to-model reachability.
 Return separate attacker_reachability and effect_reachability evidence axes.
+Independently challenge false/omitted feature declarations, not just the chosen
+requirements. Necessary refuted assumptions/capabilities require rejection;
+unknown capabilities cannot establish attacker entry. Distinguish technical
+human_action_binding from human_persuasion observed in bounded human evidence.
 Disposition every minimum_evidence requirement; independently inspect omitted
 requirements and necessary assumptions, every composite edge and delegation grant.
 Observed model samples prove only their stated model/conditions; direct proposals

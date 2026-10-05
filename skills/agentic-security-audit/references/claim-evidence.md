@@ -16,10 +16,32 @@ Assumptions have stable IDs, statements, `established | assumed | unknown |
 refuted` status, `source | runtime | deployment | external` dimension, anchor
 IDs, source evidence and an optional owner/document reference. Established and
 refuted facts require evidence or a reference. Attacker capabilities have IDs,
-descriptions, anchor IDs and ingress evidence; disclose unestablished access.
+descriptions, anchor IDs, ingress evidence, `established | assumed | unknown |
+refuted` status, necessary `assumption_ids`, `deployment_dependent` and
+`deployment_evidence`. Decisive capabilities need ingress evidence; established
+ones require every dependent assumption established. A finding's capability IDs
+are necessary capabilities, not alternatives: confirmed findings and established
+attacker reachability require all of them established. Unknown/assumed capability
+leaves attacker reachability and its entry requirement unresolved.
+
+An established deployment-dependent capability additionally requires a linked
+established deployment assumption and a configuration receipt (method
+`deployment_configuration`, reference, SHA-256, named environment, result and
+limitations), with deployment assurance partial/assessed. Refuted deployment
+capabilities need an established/refuted deployment assumption and configuration
+receipt. A source handler proves ingress logic, not internet exposure. Candidate
+assumption IDs must include dependencies inherited from capabilities. Receipt
+hashes bind descriptions of inspected configuration; helpers cannot attest the
+external file's truth or independently establish production topology.
 Candidates cite `capability_ids` and all necessary `assumption_ids`. Confirmation
 requires every necessary assumption established. Unrelated deployment unknowns
 do not invalidate a bounded source finding.
+
+Any refuted necessary assumption/capability requires `rejected`, even if another
+fact remains unresolved. Requirements depending on refuted facts must be refuted;
+their rationale may reference the threat-model refutation directly instead of
+inventing a separate validation entry. The underlying decisive fact must still
+have evidence. Such a dependency is itself a structured rejection reason.
 
 Bind `threat_model_hash` using `audit_integrity.canonical_hash`. Agents, critics,
 candidates, findings and final review bind the same model. Changes require
@@ -32,7 +54,7 @@ Findings have `attacker_reachability` and `effect_reachability`: each includes
 `status: established | unresolved | refuted`, bounded claim, `evidence_ids` and
 `missing_facts`. Decisive statuses require evidence and no missing facts;
 unresolved status requires an exact missing fact. Confirmation requires both
-axes established. Rejection requires a refuted axis or requirement.
+axes established. Rejection requires a refuted axis, requirement or necessary dependency.
 `needs_validation` requires a structured unresolved axis, requirement or necessary
 assumption, rather than an unrelated prose caveat.
 
@@ -52,6 +74,36 @@ not independence. Static axis evidence includes the corresponding source/sink.
 
 ## Formal minimum evidence
 
+Every candidate and finding contains the same required `claim_features` object,
+with all flags explicitly true/false. The flags bind through the candidate receipt.
+The validator derives mandatory claim types through `audit_claims.mandatory_claims`;
+an omitted requirement fails validation even when generic source/entry checks pass.
+
+| Feature | Mandatory claim |
+| --- | --- |
+| `remote_effect` | `remote_write_outcome` |
+| `network_dependent` | `network_route` |
+| `race_dependent` | `race_interleaving` |
+| `human_dependent` | `human_action_binding` |
+| `human_persuasion` | `human_persuasion`, with `human_dependent=true` |
+| `distributed_sequence` | `failure_propagation` |
+| `model_mediated` | `model_inducement`; flag equals attacker route |
+| `delegated` | `delegation_scope`; flag equals presence of provenance |
+
+`remote_effect` means the security claim depends on a remote committed write or
+unknown remote write outcome; a remote read alone does not trigger it.
+`network_dependent` means actual routing/exposure is necessary, rather than just a
+source-level URL check. Mark concurrency, distributed sequences and human
+dependencies when they are necessary to the alleged effect. A claim type cannot
+be present while its corresponding feature is disabled. Every composite step
+still requires its own source-control requirement. Features do not create new
+attack classes or invariants.
+
+Independent verifiers must compare each flag with actual source, chain and scope.
+The helper derives the bar from declared features; it cannot detect a dependency
+that was falsely declared absent and omitted everywhere. Critics must challenge
+that classification rather than treating a valid flag object as source proof.
+
 Freeze candidate `minimum_evidence`: ID, claim type, bounded description, optional
 chain `step_id` and dependent `assumption_ids`. Every candidate requires
 `attacker_entry` and `source_control`. Verifiers return exactly one
@@ -69,7 +121,8 @@ satisfied and every necessary assumption established.
 | `network_route` | Deployment configuration **and** source trace or executed fixture/test. |
 | `remote_write_outcome` | Provider contract **and** source trace or executed fixture/test. |
 | `delegation_scope` | Trace or fixture/test of grant-to-use scope. |
-| `human_decision` | Trace or fixture/test of evidence, approval object and effect. |
+| `human_action_binding` | Trace or fixture/test of evidence, approval object and effect. |
+| `human_persuasion` | Bounded owner observation or controlled human observation. Static trace and software tests alone cannot establish persuasion. |
 | `failure_propagation` | Static interleaving proof or executed bounded fixture/test. |
 
 `static_interleaving` describes competing actors, reads, state changes, checks
@@ -86,10 +139,19 @@ discover undeclared dependencies or interpret free-text claims automatically.
 
 Executed fixtures/tests require the existing OS-enforced sandbox record.
 Model samples, owner observations, deployment configurations and provider
-contracts are inspected frozen/owner-provided evidence with null execution ID;
+contracts, and controlled human observations are inspected frozen/owner-provided evidence with null execution ID;
 they do not authorize live requests or target execution. Do not mislabel target
 execution as an owner observation. Live evidence requires separate authorization
 and applicable execution controls.
+
+Human action binding is a technical claim about presentation and the executed
+object. Human persuasion is an observed behavioral claim about an actual human
+decision under the stated misleading evidence. Record the bounded procedure,
+observed decision/effect, participants' roles, conditions and limits without
+personal data or a generalized success claim. Controlled human observations
+belong to runtime assurance; owner observations retain deployment assurance.
+These inspected receipts do not authorize experiments, live privileged effects
+or target execution. Persuasion also needs the separate action-binding requirement.
 
 ## Composite exploits and delegation
 
