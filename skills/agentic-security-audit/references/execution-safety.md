@@ -31,6 +31,14 @@ or replace an independent verifier.
 
 ## Recorded execution evidence
 
+The OS-enforced controls above apply equally to Lite and Standard. The structured
+record instructions below apply to Standard bundles. Lite does not initialize
+those JSON artifacts: before execution, use a frozen host-provided source snapshot
+and retain the host's enforcement receipt, source identity, command, control and
+resource-limit evidence in the compact report/reference. If that evidence or the
+enforced controls are unavailable, remain static-only. A smaller report never
+permits target code to run with broader host access.
+
 Before execution set `execution_policy: sandboxed` and record an `execution_runs`
 entry: unique ID, exact command, source manifest hash, host enforcement mechanism,
 evidence references, environment variable **names** (never values/secrets), all
@@ -45,6 +53,12 @@ the host evidence and state unavailable guarantees. Declared flags are not an
 attestation. Keep this limitation in the report.
 
 ## Artifact isolation and source identity
+
+The manifest/helper binding rules in this section apply to Standard. For static
+Lite reviews, record available source identity and recheck the cited paths before
+reporting; no whole-repository manifest is required. Lite file outputs still
+default outside target and must be inaccessible to target execution. Frozen
+source and actual host isolation are required if target code is executed.
 
 Keep outputs outside the target checkout by default, preferably in a host-provided
 isolated location. `init_audit.py` defaults to

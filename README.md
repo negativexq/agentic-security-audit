@@ -2,7 +2,7 @@
 
 **A coverage-led security audit skill for tracing where untrusted agent context becomes real execution authority.**
 
-Audit tool-using agents, RAG and memory pipelines, MCP integrations, approval workflows, delegated tasks and durable execution paths. Follow actual source code from an attacker-controlled input to a privileged effect, then independently verify the finding.
+Review tool-using agents, RAG and memory pipelines, MCP integrations, approval workflows and durable execution. Use Lite for focused developer reviews and Standard for independent release/security audits. Follow source from realistic attacker control to a meaningful effect and accept equivalent controls that stop it.
 
 The skill is agent- and model-independent. Use it with any agent that can inspect repository files and follow Markdown instructions. It has no vendor-specific SDK, agent API or required installation path.
 
@@ -14,13 +14,14 @@ The skill is agent- and model-independent. Use it with any agent that can inspec
 | What does it trace? | Untrusted context becoming execution authority and a real system effect. |
 | What does it cover? | AI agent security, tool authorization, MCP security, RAG and memory poisoning, approval binding, resume and replay safety. |
 | How is it organized? | 12 invariants, 20 attack classes and 5 specialist hunter roles. |
-| What does it produce? | Source-backed authority maps, a coverage ledger, adjudicated findings and generated reports. |
+| What does it produce? | Lite: compact scoped review. Standard: authority maps, coverage ledger, independently adjudicated records and reports. |
 | What runs the audit? | Your chosen repository-reading agent; separate contexts are required for independent verification. |
 | What do the helpers require? | Python 3.10+ and `jsonschema`. |
 
 ## Documentation navigation
 
 - [What it investigates](#what-it-investigates)
+- [Profiles and finding philosophy](#profiles-and-finding-philosophy)
 - [Quick start](#quick-start)
 - [Installation and portability](#installation-and-portability)
 - [Audit workflow](#audit-workflow)
@@ -64,28 +65,55 @@ attacker-controlled source
   + reachable security effect
 ```
 
-An unsafe proposal stopped by deterministic software is containment evidence. A model-quality warning and an unauthorized committed effect are different outcomes.
+An unsafe proposal stopped by verified deterministic enforcement is containment evidence for the inspected path. A model-quality warning and an unauthorized committed effect are different outcomes.
+
+## Profiles and finding philosophy
+
+**Find production-relevant failures, accept equivalent controls, and spend audit cost proportional to requested scope and assurance.** Missing best practices, broad-but-contained credentials, unusual architectures and unknown external facts are not vulnerabilities by themselves. Require a realistic source, crossed boundary, broken authoritative control and reachable effect with a meaningful consequence. Recommend the smallest effective fix at the actual enforcement point.
+
+| | Lite | Standard |
+| --- | --- | --- |
+| Use | Quick, PR, feature or domain review | Full, independent, release or pre-production audit |
+| Contexts | One, including a self-challenge pass | Scoped hunters, independent critics/verifiers and final reviewer |
+| Scope | Selected domains and necessary adjacent paths | Focused or full selected scope |
+| Output | Chat or `LITE-REPORT.md` | Existing schema v4 artifact bundle |
+| Risk label | Potential production risk; no severity | Independently adjudicated; severity only if confirmed |
+| Evidence | Same source-to-effect standard, explicit necessary unknowns | Same standard plus independent verification and artifact accounting |
+
+Choose the smallest profile that answers the question without overstating confidence. Lite does not initialize a Standard bundle or launch independent roles. Explicit Standard requests retain their completion gates even when independence is unavailable. Profile selection adds no JSON fields, attack classes or invariants.
+
+Lite routes **Authority, Actions, Lifecycle, Context, Integrations, Effects and Resilience** to existing guides. Users can say “audit MCP”, “RAG + memory” or “confirmation + resume”; class numbers are not required. Follow relevant downstream controls even when they live outside the selected domain's folder. Read [Lite workflow/domain routing](skills/agentic-security-audit/references/lite-profile.md) or [Standard workflow](skills/agentic-security-audit/references/standard-profile.md).
+
+Deployment evidence is required only when the claim depends on actual exposure/topology. An LLM on a path does not require induction evidence when direct attacker control is deterministically preserved. Technical approval-object mismatches do not require human persuasion experiments. Single root cause is the default; composite chains are for jointly necessary broken controls.
 
 ## Quick start
 
-Make the skill folder and target repository available to your chosen agent, then give it these instructions:
+Make the skill folder and target repository available to your chosen agent. For a focused review:
 
 ```text
-Read skills/agentic-security-audit/SKILL.md and follow its audit workflow
-for this agentic application. Load supporting references as directed.
-Map its authority boundaries, maintain a coverage ledger, and produce
-independently verified findings with source evidence and a final report.
+Read skills/agentic-security-audit/SKILL.md. Use Lite to review confirmation
+and resume safety in this application. Trace relevant paths, challenge each
+hypothesis against equivalent controls, and give a compact scoped report.
 ```
 
-For a narrower review:
+For an independent release review:
 
 ```text
-Read skills/agentic-security-audit/SKILL.md and review confirmation
-and resume safety in this application.
-Focus on exact action binding, expiry, argument changes and revalidation.
+Read skills/agentic-security-audit/SKILL.md. Perform a Standard release
+security audit of this application within the agreed scope and budget.
+Produce the v4 bundle with independent coverage criticism, candidate
+verification and final review.
 ```
 
-A focused review uses the relevant guidance without automatically starting a full audit or creating a report bundle.
+To escalate one Lite hypothesis:
+
+```text
+Independently verify only LITE-001. Re-read source and challenge its
+attacker-to-effect trace. Return the candidate verdict and evidence;
+do not start a repository-wide Standard audit.
+```
+
+A fresh context must actually be available and authorized. This returns a bounded candidate verification note, not a completed Standard audit or a schema-validated bundle. Standard artifacts require canonical source/threat/candidate bindings and fresh verification of that exact record. See [candidate escalation](skills/agentic-security-audit/references/lite-profile.md#candidate-escalation).
 
 ## Installation and portability
 
@@ -100,6 +128,10 @@ If your agent supports native skill discovery, register this folder using that e
 The package supplies instructions and artifact helpers. The host executes the investigation and provides agent isolation. Independent hunters, verifiers, coverage critics and the final reviewer require actual separate agent contexts. When these are unavailable, the skill supports sequential investigation, preserves pending candidates and reports the full audit as `incomplete`.
 
 ## Audit workflow
+
+Lite follows **selected domain → source-to-effect reconnaissance → hunt → counterevidence/self-challenge → compact report**. It records inspected paths, potential production risks, necessary unknowns, containment observed, optional non-finding observations and narrow fixes. Self-review is disclosed and never relabeled independent confirmation.
+
+The following workflow and specialist roles apply to **Standard**. The v4 schema and validation gates remain its contract.
 
 | Phase | Work | Evidence produced |
 | --- | --- | --- |
@@ -130,7 +162,7 @@ Supply chain, communication guarantees, cascading failures, human trust and rogu
 
 ## Outputs and finding states
 
-Full audits produce:
+Standard audits produce:
 
 | Artifact | Purpose |
 | --- | --- |
@@ -153,9 +185,15 @@ Full audits produce:
 
 Pending candidates stay outside `findings.json`. Missing an independent verifier makes the audit incomplete; it does not convert an allegation into a `needs_validation` finding.
 
+Lite uses potential-risk descriptions without these Standard verdict/severity labels. Unknown facts alone are coverage limits; a concrete source hypothesis with a necessary missing fact is a validation question. `needs_validation` in Standard likewise does not mean the product failed its security audit.
+
+Lite reports can include **Containment observed** and **Non-finding observations** directly. Standard may supply optional **Verified containment** and **Non-finding observations** in chat or `REVIEW-NOTES.md`, clearly labeled supplemental and outside the canonical/host-attested bundle. Cite bounded control evidence and source/ledger references. Do not append free text to generated `REPORT.md` or treat every rejected hypothesis as containment. Hardening notes receive no vulnerability severity.
+
 `complete` means the selected pass finished: coverage units have evidence-backed dispositions, both independent coverage critiques passed, candidates are adjudicated, final independent review passed and current-source bundle validation succeeds. A full audit requires at least one reviewed unit. It does not imply exhaustive coverage or certify the target as secure. Partial runs retain their evidence and exact incomplete reason.
 
 ## Artifact helpers
+
+These helpers serve Standard bundles. Lite source reviews require no Python, JSON initialization or full report artifacts.
 
 The Python helpers require **Python 3.10+** and `jsonschema`. Install the dependency from the repository root:
 
@@ -192,7 +230,7 @@ agentic-security-audit is a reusable security audit skill for AI agent applicati
 
 ### How do I audit an AI agent application with this skill?
 
-Give your agent the skill folder and target repository, ask it to read `skills/agentic-security-audit/SKILL.md`, and define the audit scope. For a full pass, provide separate contexts for hunters, planning/final coverage critics, candidate verifiers and a final reviewer. Python helpers capture source identity, initialize and validate artifacts; they do not perform the investigation.
+Give your agent the skill folder and repository, ask it to read `skills/agentic-security-audit/SKILL.md`, and state scope/assurance. Specific developer reviews use Lite; explicit full, independent or release audits use Standard. For Standard provide separate contexts for critics, hunters, candidate verifiers and final review. Python helpers account for Standard artifacts; they do not investigate source.
 
 ### Does it require a particular agent or model?
 
@@ -216,7 +254,7 @@ The audit compares the exact action shown or approved with the object executed, 
 
 ### What happens when independent agents are unavailable?
 
-The investigation can proceed through sequential scoped passes. Candidates stay pending, independence is recorded as unavailable, and the full audit remains incomplete until independent coverage criticism, adjudication and final review are performed.
+Lite works in a single context and explicitly discloses self-review. A requested Standard audit can proceed through sequential investigation, but candidates remain pending and the audit stays incomplete until independent criticism, adjudication and final review are performed. A request to verify a Lite candidate cannot claim independence when no fresh verifier exists.
 
 ### Does a complete audit mean the application is secure?
 

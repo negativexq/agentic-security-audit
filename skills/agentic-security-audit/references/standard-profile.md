@@ -1,0 +1,105 @@
+# Standard profile
+
+Use this profile for an explicitly full, independent, release or pre-production
+security audit. Scope can be focused or full; schema v4 `audit_mode` retains those
+meanings. Profiles are instruction routing, not new JSON fields. Apply the shared
+risk-based finding philosophy in [SKILL.md](../SKILL.md).
+
+The v4 schema, validator gates and evidence requirements remain the Standard
+contract. Do not add controls, fields or role invocations merely because the
+profile is called Standard. Assign only relevant specialists and concrete units;
+five specialist roles do not require five hunters on every run.
+
+Record revision, working-tree state, selected subsystems, exclusions and budget.
+Reserve independent validation and coverage criticism before allocating hunting.
+Initialize a frozen `source-manifest.json` and isolated output outside the target.
+Every independent pass binds the same source/threat hashes; stop on drift.
+Read [invariants](invariants.md), [artifact contract](artifact-contract.md) and
+[execution safety](execution-safety.md). Load only relevant attack classes.
+
+## Observations and containment presentation
+
+Hardening observations receive no vulnerability severity and do not enter
+`findings.json`. `needs_validation` is a source-grounded hypothesis awaiting
+necessary facts, not a failed product assessment. Preserve canonical reports:
+the renderer/validator still derives them exactly from v4 JSON. Do not append
+free text to REPORT.md or reinterpret every rejected candidate as containment.
+
+When useful, provide optional **Non-finding observations** and **Verified
+containment** in chat or a separate `REVIEW-NOTES.md` outside target. Label these
+as supplemental notes, not schema-validated Standard verdicts. Each containment
+entry cites the actual inspected control, source identity, linked ledger unit or
+adjudicated record, evidence and scope limits. Do not call a broad path contained
+merely because one proposal was blocked. Material security claims belong in the
+canonical candidate/verification workflow. Supplemental notes neither satisfy
+coverage gates nor override the source of truth; their existence is not required
+for completion and they are outside the canonical host-attested bundle.
+
+## 1. Reconstruct agentic authority
+
+Read [claim and evidence rules](claim-evidence.md). Build `threat-model.json` first: trust anchors, attacker capabilities, necessary assumptions and unknown source/runtime/deployment/external facts. Bind its canonical hash alongside the source manifest in every independent pass and candidate. Threat assumptions are not established merely because a component is named trusted. Changes require reassessment and fresh affected verification.
+
+Start at privileged writes and sensitive reads, then trace backward to all reachable callers. Map agents, model calls, tool registries/handlers, MCP clients/servers, retrieval and ingestion, memory writers/readers, credentials, human approvals, durable checkpoints, background jobs, delegated agents, external APIs and output destinations. Explicitly record components absent from source and components whose existence is unknown.
+
+For each path, record the requesting principal, effective execution identity, tenant/customer scope, attacker-controlled fields, authoritative inputs, policy gate, intentional-request or approval binding, last trusted enforcement point, and actual effect/receipt. Compare direct API, model, queued, batch, retry, resume, recovery, human and delegation paths. Do not infer gates from names: cite file, symbol and line at the audited revision for each graph edge. Mark unobserved edges as unknown.
+
+Write `architecture.md` and `authority-map.md`. Separate grounding (did the user specify this target?), authorization (may this actor access it?), action binding (is this the operation intentionally requested/approved?), and transaction correctness (can this effect commit once under current state?). A correct answer to one does not establish the others.
+
+## 2. Plan and preserve coverage
+
+Use the [OWASP Agentic Top 10 crosswalk](owasp-agentic-crosswalk.md) during planning and coverage criticism to challenge omitted threat families. Respect selected scope and disclose partial dimensions; an ASI label or a linked guide does not establish coverage or a finding.
+
+Create `coverage-ledger.json` before hunting. A unit is **subsystem × concrete boundary/path variant × attack class × invariant**. Seed units from the maps, including alternate entry paths and transaction boundaries. Priority follows reachable effect and authority breadth; split units too large for an evidence-backed review.
+
+Use `unreviewed`, `in_progress`, `reviewed`, `candidate`, `blocked`, `deferred` or `not_applicable`. `reviewed` requires evidence and a review result; it never means secure. `not_applicable` requires an inspected absence with a reason. Missing deployment facts are `blocked`, not absent. Keep candidate IDs and rejected records so coverage is not rewritten after triage. Extend the ledger when new paths emerge; preserve existing IDs.
+
+Before hunting, use a fresh planning coverage critic to inspect the source independently of the initial maps. It searches for omitted sinks, callers, workers, recovery paths, identities, stores and tool/MCP surfaces, returning missing units with source evidence rather than finding verdicts. Integrate those units without dropping earlier IDs; record the critic's input ledger snapshot/hash, discoveries and disposition in metadata. Unavailable independent criticism keeps a full audit incomplete.
+
+## 3. Hunt in scoped waves
+
+Use the five specialist roles and isolation rules in [orchestration](orchestration.md). When the host supports independent agents and delegation is authorized, give each hunter only its assigned units, relevant code, invariants and attack-class guidance. Do not share other hunters' candidate narratives. Hunters return structured results; only the parent edits shared artifacts. Run waves within the host's actual concurrency limit; five roles do not require five simultaneous agents.
+
+If delegation is unavailable, perform the same scoped passes sequentially and record `independence: unavailable`. Do not impersonate independent verifiers or claim independent confirmation. Keep source-grounded unresolved candidates in `candidates.json`; a later independent run can adjudicate them. A full audit requiring independent verification remains `incomplete` until that requirement is met.
+
+Each hunter searches for a violated invariant, follows the full source-to-effect path, checks downstream defenses and returns disconfirming evidence as well as hypotheses. Prompt injection alone, model-selected arguments, a broad service credential, and missing hardening are not findings without a boundary failure and meaningful consequence.
+
+## 4. Gate candidates
+
+Declare every `claim_features` flag explicitly from the source path: remote write outcome, actual network route, race, human action binding/persuasion, distributed sequence, model mediation and delegation. The validator derives mandatory requirement types from those flags. Independently challenge omitted/false flags rather than lowering the evidence bar to generic source traces. Bind capability status and inherited assumptions; source ingress alone cannot establish deployment-dependent access.
+
+Use `primary_invariant`; record optional composite contributors as an empty or populated `contributing_invariants` array and an ordered `exploit_chain`. Each necessary step needs matching coverage, connected authority states and its own evidence requirement. Keep independently fixable causes distinct and avoid counting aggregate impact twice. Record delegated authority origins and scope attenuation in `delegation_provenance`. Bind candidate assumptions, attacker capabilities, `attacker_route` and claim-specific `minimum_evidence` before verification.
+
+Admit a candidate only with **attacker-controlled source + crossed boundary + broken/missing authoritative control + reachable security effect**. Name attacker, affected principal/resource, effective identity and necessary preconditions. Same-principal self-impact and an intentional authorized request are not confused-deputy defects. An unwanted action using a victim's valid permissions can still violate action binding.
+
+Store admitted records in `candidates.json`, with source/control/sink evidence, the source manifest hash and a deterministic fingerprint. Deduplicate by root cause, boundary, sink and failed control, preserving all coverage-unit links. Separate independently fixable failures. A suspicious path without an identified effect stays a ledger hypothesis, not a finding. Do not assign severity before independent confirmation.
+
+## 5. Independently adjudicate and verify final records
+
+Freeze the candidate allegation with `audit_integrity.candidate_hash(candidate)` (all fields except mutable `status`). Give the exact candidate and hash to a fresh verifier who did not hunt it. The verifier returns `verified_candidate_hash`; the parent copies allegation fields unchanged into the finding. Correct a mistaken allegation in the candidate and obtain fresh verification; do not change its impact, principal, trace or preconditions only in the final record. Hashes detect drift, not forged attestations. Use [verifier prompts and verdict rules](orchestration.md); require independent source inspection and a search for defeating controls. A controlled direct proposal can prove a deterministic dispatch defect; it does not prove an external attacker can cause that proposal through a particular model. State that missing reachability fact explicitly.
+
+Verifier verdicts:
+
+Required attacker capabilities must be established for confirmation and established attacker reachability. Deployment-dependent capabilities also need established deployment assumptions and configuration receipts. Unknown capability keeps attacker entry unresolved. Any refuted necessary assumption/capability requires rejection, even if another fact remains unknown; propagate its refutation into dependent requirements. Separate technical `human_action_binding` from behavioral `human_persuasion`; persuasion requires bounded observed human evidence.
+
+- `confirmed`: complete source trace plus bounded evidence of the claimed effect under stated preconditions; severity follows demonstrated impact.
+- `needs_validation`: a specific source-grounded hypothesis with an exact unresolved runtime/deployment/provider fact and a bounded owner/local check. Severity is null.
+- `rejected`: source evidence shows the claimed effect is unreachable, authorized, prevented, or incorrectly described. Preserve the defeating control and reason; severity is null.
+
+Record attacker and effect reachability separately, with explicit evidence IDs and unresolved facts. Confirmation requires both established, every necessary claim requirement satisfied, and necessary threat assumptions established. Model-mediated entry requires observed model-inducement evidence; an arbitrary malicious proposal only proves dispatch behavior. Use static interleaving proofs or bounded executed tests for race claims, provider contracts for dependent remote outcomes, and deployment configuration for dependent network routes. Verify every composite edge and control; an unresolved necessary step keeps the aggregate unresolved.
+
+No verifier available is an incomplete audit, not a `needs_validation` finding. Pending candidates remain outside `findings.json`. Inspect code after arguments are final and before every effect, including database/external concurrency guarantees. Keep model-quality warnings separate from security outcomes; a hallucinated proposal blocked by software is evidence of containment.
+
+Write final records to `findings.json`. Use a second fresh coverage critic after candidate adjudication to independently search for omitted coverage; do not supply finding narratives. Integrate and hunt new units, adjudicate their candidates, and repeat final criticism until it passes on the current ledger. A stale or unresolved critique prevents completion. Have a fresh final reviewer, distinct from hunters, candidate verifiers and coverage critics, check final record claims, severity, source revision, deduplication, evidence and ledger gaps. Return materially changed findings to a new verifier. Record this review in `run-metadata.json`; do not self-certify it. The instructions govern independence; the artifact validator checks declared roles, not whether the host actually isolated contexts.
+
+## 6. Derive and validate the bundle
+
+Include structured `threat-model.json` and derived `threat-model.md`. Preserve `assurance.source/runtime/deployment/external` separately from run status; a source-complete pass can leave deployment and provider behavior unassessed. Default independence evidence is `declared`. Only use `host_attested` when an external trusted host has signed the full final bundle and context inventory; verify with externally pinned public keys. The helpers do not create host isolation or issue attestations. See the claim/evidence reference for the optional adapter contract and failure rules.
+
+Deliver `architecture.md`, `authority-map.md`, `coverage-ledger.json`, `candidates.json`, `findings.json`, `source-manifest.json`, `run-metadata.json`, `REPORT.md` and `FINDINGS-DETAIL.md`. Findings and coverage use the packaged schemas. Use the helpers under `scripts/` as documented in the artifact contract; render reports from adjudicated records so prose and JSON agree.
+
+Terminal outcomes:
+
+- `complete`: the planning and final independent coverage critiques passed, the current source matches the frozen manifest, all selected units are reviewed or demonstrably not applicable (a full audit needs at least one reviewed unit), every candidate has an independent disposition, the final independent record review passed, and bundle validation passes. This means the selected pass finished, not that the target is secure or coverage exhaustive.
+- `incomplete`: preserve partial artifacts, outstanding candidates/units and the exact reason. Render a partial report and validate its consistency. Never relabel unfinished work as reviewed or independent.
+
+For confirmed findings recommend the narrowest change at the authoritative enforcement point and a regression assertion about the effect, without applying fixes unless requested. Preserve explicit exclusions, tests not run, unknown external guarantees and separate evidence denominators in the report. Do not give a synthetic security score.

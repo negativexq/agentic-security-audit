@@ -3,10 +3,10 @@
   "@type": "SoftwareSourceCode",
   "name": "agentic-security-audit",
   "headline": "AI Agent Security Audit Skill",
-  "description": "An agent-independent, coverage-led security audit skill for tracing untrusted AI agent context into execution authority and real system effects.",
+  "description": "An agent-independent skill for finding production-relevant agentic authority and execution failures, with Lite scoped reviews, Standard independent audits and acceptance of equivalent controls.",
   "inLanguage": "en",
   "programmingLanguage": "Python",
-  "runtimePlatform": "Markdown instructions; optional artifact helpers require Python 3.10+ and jsonschema.",
+  "runtimePlatform": "Markdown instructions for Lite and Standard profiles; optional Standard artifact helpers require Python 3.10+ and jsonschema.",
   "codeSampleType": "Markdown audit instructions and Python artifact helpers",
   "keywords": [
     "AI agent security audit",
@@ -20,7 +20,9 @@
     "approval binding",
     "resume safety",
     "idempotency",
-    "independent verification"
+    "independent verification",
+    "scoped security review",
+    "equivalent security controls"
   ],
   "about": [
     {

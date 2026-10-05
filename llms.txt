@@ -2,7 +2,7 @@
 
 > An agent-independent, coverage-led security audit skill for tracing untrusted AI agent context into execution authority and real system effects.
 
-The package contains Markdown audit instructions, 12 security invariants, 20 attack classes, five specialist hunter roles, independent-verification guidance, JSON Schema and Python artifact helpers. It covers tool authorization, MCP, RAG, memory, approval binding, resume, idempotency, uncertain writes and evidence integrity. Python helpers require Python 3.10+ and jsonschema.
+The package offers Lite scoped single-context reviews and Standard independent audits, using 12 invariants and 20 attack classes. Lite produces chat or a compact report; Standard uses the existing v4 JSON/Markdown bundle and Python helpers (Python 3.10+ and jsonschema). It investigates production-relevant effects and accepts equivalent controls that stop them; missing best practices are not vulnerabilities.
 
 A candidate needs attacker-controlled input, a crossed trust boundary, a broken authoritative control and a reachable security effect. Pending candidates are distinct from independently adjudicated findings. Only confirmed findings receive severity. A completed selected pass is not a security certification. Independent contexts are required for independent verification.
 
@@ -12,6 +12,8 @@ Links below are relative to the repository root. A website publisher should pres
 
 - [README](README.md): Definition, quick start, workflow, outputs and frequently asked questions.
 - [Audit instructions](skills/agentic-security-audit/SKILL.md): Scope selection, source-to-effect investigation and completion rules.
+- [Lite profile](skills/agentic-security-audit/references/lite-profile.md): Domain selection, self-challenge, compact report and bounded candidate escalation.
+- [Standard profile](skills/agentic-security-audit/references/standard-profile.md): Existing v4 independent workflow, canonical artifacts and optional supplemental observations/containment notes.
 
 ## Audit references
 

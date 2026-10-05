@@ -60,6 +60,7 @@ def render(bundle: dict) -> dict[str, str]:
                bullet_list([f"{candidate['id']}: {candidate['title']} (units: {', '.join(candidate['unit_ids'])})"
                             for candidate in pending]), "", "## Adjudicated records", "",
                f"Confirmed: {verdicts['confirmed']}. Needs validation: {verdicts['needs_validation']}. Rejected: {verdicts['rejected']}.", "",
+               "Needs validation records are source-grounded hypotheses awaiting stated facts; they are not confirmed vulnerabilities or a failed security audit.", "",
                "| ID | Disposition | Severity | Title | Units |", "| --- | --- | --- | --- | --- |"]
     for finding in sorted(findings, key=lambda record: record["id"]):
         report.append(f"| {finding['id']} | {finding['confidence']} | {finding['severity'] or '—'} | {md(finding['title'])} | {', '.join(finding['unit_ids'])} |")
