@@ -1,5 +1,7 @@
 # 12 — Agent delegation
 
+Record `delegation_provenance` for the concrete parent → child → worker → MCP route: delegator, recipient, authoritative grant source, granted resource/capability scope, effective scope at use, attenuation or alleged expansion, audience, expiry and cancellation/resume conditions. Every edge must connect to coverage and a `delegation_scope` requirement. Trace capability origin independently of the model's description of its authority; a propagated identity string is not proof of a valid grant.
+
 Trace parent → child/worker authority and child → parent results. Check credential/capability narrowing, tenant propagation, task scope, approved-action binding, shared memory, queue ownership and cancellation. Inspect background work that outlives the user session or permission. Can a delegated agent mint further capabilities, return a forged approval, or persuade the parent to use broader authority?
 
 Require authority amplification or an unintended cross-boundary effect with actual execution identity. Parent permission alone is not proof the child should inherit it; compare the intended task and resource set.

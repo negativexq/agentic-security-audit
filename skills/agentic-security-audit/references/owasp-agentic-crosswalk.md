@@ -62,6 +62,12 @@ No OWASP mitigation text is reproduced here.
 
 ## Beyond this taxonomy
 
+The [claim/evidence contract](claim-evidence.md) records composite paths, delegated
+grant provenance, human-decision and distributed-propagation requirements, and
+separate assurance dimensions. These improve evidence accounting within existing
+routes; they do not turn the partial categories into end-to-end coverage. Supply
+chain remains partial without a dedicated provenance/update-governance audit.
+
 Approval expiry, resume revalidation, stable action identity and unknown-write
 reconciliation remain explicit native audit concerns even when several ASI
 categories overlap them. Preserve these lifecycle units instead of replacing

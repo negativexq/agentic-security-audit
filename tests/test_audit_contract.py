@@ -29,6 +29,13 @@ def evidence(path="fixture/dispatch.py", line=12, symbol="dispatch", summary="Sy
 
 def complete_fixture() -> dict:
     bundle = initial_bundle("synthetic-fixture", ["refund-path"], "clean fixture")
+    bundle["threat_model"].update(anchors=[{"id": "user-input", "component": "fixture request",
+        "trust": "untrusted", "rationale": "Caller controls resource ID", "evidence": [evidence()]}],
+        attacker_capabilities=[{"id": "request-control", "description": "Authenticated caller directly supplies resource ID",
+                                "anchor_ids": ["user-input"], "evidence": [evidence()]}], limitations=["Synthetic fixture only."])
+    threat_digest = canonical_hash(bundle["threat_model"])
+    bundle["metadata"]["threat_model_hash"] = threat_digest
+    bundle["metadata"]["assurance"]["source"] = {"status": "assessed", "basis": ["Frozen synthetic source inspected"], "limitations": []}
     manifest = bundle["source_manifest"]
     manifest["files"] = {p: {"sha256": "a" * 64, "size": 80} for p in
                          ("fixture/proposal.py", "fixture/dispatch.py", "fixture/store.py")}
@@ -46,9 +53,12 @@ def complete_fixture() -> dict:
         "limitations": ["Contract test data; no target was audited."]})
     for agent in bundle["metadata"]["agents"]:
         agent["source_manifest_hash"] = digest
+        agent["threat_model_hash"] = threat_digest
     for cid in ("critic-planning", "critic-final"):
-        bundle["metadata"]["agents"].append({"id": cid, "role": "coverage_critic", "unit_ids": [], "source_manifest_hash": digest})
+        bundle["metadata"]["agents"].append({"id": cid, "role": "coverage_critic", "unit_ids": [], "source_manifest_hash": digest,
+                                             "threat_model_hash": threat_digest})
     bundle["metadata"]["final_review"]["source_manifest_hash"] = digest
+    bundle["metadata"]["final_review"]["threat_model_hash"] = threat_digest
     bundle["ledger"] = [{
         "id": "AUTH-001", "subsystem": "refund", "boundary": "model -> tool",
         "path_variant": "direct-dispatch", "attack_class": "02", "invariant": "AGENT-INV-002",
@@ -58,37 +68,48 @@ def complete_fixture() -> dict:
     candidate = {
         "id": "CAND-001", "status": "adjudicated", "fingerprint": "",
         "unit_ids": ["AUTH-001"], "title": "Unscoped synthetic write",
-        "invariant": "AGENT-INV-002", "root_cause": "dispatch:missing-resource-authorization",
+        "primary_invariant": "AGENT-INV-002", "root_cause": "dispatch:missing-resource-authorization",
         "source": evidence("fixture/proposal.py", 8, "propose", "Attacker controls target"),
         "control": evidence(), "sink": evidence("fixture/store.py", 31, "mutate", "Dummy cross-tenant effect"),
         "attacker": "fixture tenant A", "principal": "fixture tenant B",
         "execution_identity": "fixture service", "affected_resource": "dummy order",
         "boundary": "model -> tool", "control_failure": "Resource authorization omitted",
         "impact": "Dummy cross-tenant mutation", "preconditions": ["Authenticated fixture user"],
-        "counterevidence": ["Input shape validated; scope not checked"]}
+        "counterevidence": ["Input shape validated; scope not checked"],
+        "threat_model_hash": threat_digest, "contributing_invariants": [], "exploit_chain": [],
+        "delegation_provenance": [], "assumption_ids": [], "capability_ids": ["request-control"], "attacker_route": "direct_input",
+        "minimum_evidence": [
+            {"id": "REQ-ENTRY", "claim": "attacker_entry", "description": "Caller can supply target ID", "step_id": None, "assumption_ids": []},
+            {"id": "REQ-CONTROL", "claim": "source_control", "description": "Unchecked ID reaches write", "step_id": None, "assumption_ids": []}]}
     candidate["source_manifest_hash"] = digest
     candidate["fingerprint"] = fingerprint(candidate)
     bundle["candidates"] = [candidate]
-    copied = ["fingerprint", "unit_ids", "title", "invariant", "source", "control", "sink", "attacker",
+    copied = ["fingerprint", "unit_ids", "title", "primary_invariant", "source", "control", "sink", "attacker",
               "principal", "execution_identity", "affected_resource", "boundary", "control_failure",
-              "impact", "preconditions", "counterevidence", "source_manifest_hash"]
+              "impact", "preconditions", "counterevidence", "source_manifest_hash", "threat_model_hash",
+              "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route"]
     finding = {key: copy.deepcopy(candidate[key]) for key in copied}
     finding.update({
         "id": "AGENT-001", "candidate_id": "CAND-001", "confidence": "confirmed",
         "verified_candidate_hash": candidate_hash(candidate),
         "severity": "high", "severity_rationale": "Synthetic cross-tenant mutation",
         "verifier_id": "verifier-a", "verifier_evidence": [evidence("fixture/store.py", 31, "mutate", "Synthetic verifier trace")],
-        "validation": [{"method": "static_trace", "reference": "synthetic source trace", "execution_id": None,
+        "validation": [{"id": "EVID-1", "proves": ["REQ-ENTRY", "REQ-CONTROL", "axis:attacker", "axis:effect"],
+                        "source_locations": [copy.deepcopy(candidate[k]) for k in ("source", "control", "sink")], "method": "static_trace", "reference": "synthetic source trace", "execution_id": None,
                         "result": "Dummy tenant B record mutated", "limitations": ["No real model involved"]}],
         "missing_fact": None, "validation_plan": None, "rejection_reason": None,
         "recommendation": "Enforce actor/resource scope at dispatch",
         "regression_assertion": "A proposal for another tenant cannot mutate its dummy order"})
+    finding.update(attacker_reachability={"status": "established", "claim": "Authenticated request controls resource ID", "evidence_ids": ["EVID-1"], "missing_facts": []},
+                   effect_reachability={"status": "established", "claim": "Unchecked ID reaches fixture mutation", "evidence_ids": ["EVID-1"], "missing_facts": []},
+                   requirement_results=[{"requirement_id": r["id"], "status": "satisfied", "evidence_ids": ["EVID-1"],
+                       "rationale": "Direct fixture source trace", "missing_facts": []} for r in candidate["minimum_evidence"]])
     bundle["findings"] = [finding]
     for stage in ("planning", "final"):
         ledger = copy.deepcopy(bundle["ledger"])
         bundle["metadata"]["coverage_reviews"].append({
             "stage": stage, "status": "passed", "critic_id": "critic-" + stage,
-            "source_manifest_hash": digest, "ledger_snapshot": ledger,
+            "source_manifest_hash": digest, "threat_model_hash": threat_digest, "ledger_snapshot": ledger,
             "ledger_hash": canonical_hash(ledger), "evidence": [evidence()], "missing_units": []})
     return bundle
 
@@ -145,12 +166,14 @@ class AuditContractTests(unittest.TestCase):
         self.bundle["findings"][0].update(confidence="needs_validation", severity=None,
                                          severity_rationale=None, missing_fact="External server request binding",
                                          validation_plan="Inspect owner-provided authenticated connection fixture")
+        self.bundle["findings"][0]["effect_reachability"].update(status="unresolved", missing_facts=["External server binding"])
         self.assertEqual(validate_bundle(self.bundle), [])
 
     def test_rejection_retains_defeating_evidence(self):
         self.bundle["findings"][0].update(confidence="rejected", severity=None,
                                          severity_rationale=None, rejection_reason="Handler checks tenant scope",
                                          counterevidence=["fixture/store.py validates tenant before mutation"])
+        self.bundle["findings"][0]["effect_reachability"]["status"] = "refuted"
         self.assertEqual(validate_bundle(self.bundle), [])
         self.bundle["findings"][0]["counterevidence"] = []
         self.assert_invalid("rejected lacks counterevidence")
@@ -215,9 +238,9 @@ class AuditContractTests(unittest.TestCase):
 
     def test_sequential_fallback_stays_incomplete_with_pending_candidate(self):
         self.bundle["metadata"].update(run_status="incomplete", incomplete_reason="independent_agents_unavailable",
-                                       independence="unavailable", agents=[{"id": "parent", "role": "parent", "unit_ids": ["AUTH-001"], "source_manifest_hash": self.bundle["metadata"]["source_manifest_hash"]}],
+                                       independence="unavailable", agents=[{"id": "parent", "role": "parent", "unit_ids": ["AUTH-001"], "source_manifest_hash": self.bundle["metadata"]["source_manifest_hash"], "threat_model_hash": self.bundle["metadata"]["threat_model_hash"]}],
                                        budget={"max_invocations": 0, "used_invocations": 0},
-                                       coverage_reviews=[], final_review={"status": "unavailable", "reviewer_id": None, "evidence": [], "source_manifest_hash": None})
+                                       coverage_reviews=[], final_review={"status": "unavailable", "reviewer_id": None, "evidence": [], "source_manifest_hash": None, "threat_model_hash": None})
         self.bundle["ledger"][0].update(status="candidate", hunter_ids=["parent"])
         self.bundle["candidates"][0]["status"] = "pending"
         self.bundle["findings"] = []
@@ -289,12 +312,24 @@ class AuditContractTests(unittest.TestCase):
                 if isinstance(value, dict):
                     value["summary"] = "Different claimed control/effect"
                 elif isinstance(value, list):
-                    value.append("Additional exploitation condition")
+                    if field == "contributing_invariants":
+                        value.append("AGENT-INV-001")
+                    elif field == "minimum_evidence":
+                        value[0]["description"] = "Changed evidence condition"
+                    elif field in {"exploit_chain", "delegation_provenance"}:
+                        # Schema rejects malformed structured allegations before
+                        # cross-record comparison; valid chains have dedicated tests.
+                        value.append("Malformed structured condition")
+                    else:
+                        value.append("Additional exploitation condition")
                 else:
-                    bundle["findings"][0][field] = ("b" * 64 if field == "source_manifest_hash" else
-                        "AGENT-INV-001" if field == "invariant" else "Altered allegation")
-                self.assertTrue(any("allegation field changed: " + field in error
-                                    for error in validate_bundle(bundle)))
+                    bundle["findings"][0][field] = ("b" * 64 if field.endswith("_hash") else
+                        "AGENT-INV-001" if field == "primary_invariant" else
+                        "model_mediated" if field == "attacker_route" else "Altered allegation")
+                errors = validate_bundle(bundle)
+                self.assertTrue(errors)
+                if field not in {"exploit_chain", "delegation_provenance"}:
+                    self.assertTrue(any("allegation field changed: " + field in error for error in errors), errors)
 
     def test_candidate_change_invalidates_verifier_receipt(self):
         self.bundle["candidates"][0]["impact"] = "Escalated cross-tenant takeover"
@@ -365,7 +400,7 @@ class AuditContractTests(unittest.TestCase):
         later = copy.deepcopy(planning)
         later.update(status="passed", critic_id="critic-planning-2", missing_units=[])
         self.bundle["metadata"]["coverage_reviews"].insert(1, later)
-        self.bundle["metadata"]["agents"].append({"id": "critic-planning-2", "role": "coverage_critic", "unit_ids": [], "source_manifest_hash": planning["source_manifest_hash"]})
+        self.bundle["metadata"]["agents"].append({"id": "critic-planning-2", "role": "coverage_critic", "unit_ids": [], "source_manifest_hash": planning["source_manifest_hash"], "threat_model_hash": planning["threat_model_hash"]})
         self.bundle["metadata"]["budget"].update(max_invocations=6, used_invocations=6)
         self.assert_invalid("unresolved missing coverage")
 
@@ -417,6 +452,7 @@ class AuditContractTests(unittest.TestCase):
                        "processes": 2, "open_files": 20, "disk_bytes": 1000000}}
         execution["controls"]["environment_allowlist"] = []
         self.bundle["metadata"].update(execution_policy="sandboxed", execution_runs=[execution])
+        self.bundle["metadata"]["assurance"]["runtime"] = {"status": "partial", "basis": ["Synthetic bounded fixture"], "limitations": ["No production deployment"]}
         self.assertEqual(validate_bundle(self.bundle), [])
         execution["controls"]["network_disabled"] = False
         self.assert_invalid("network_disabled")

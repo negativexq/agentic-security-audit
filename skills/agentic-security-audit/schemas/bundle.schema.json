@@ -1,20 +1,39 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Agentic Security Audit v2 bundle",
+  "title": "Agentic Security Audit v3 bundle",
   "type": "object",
   "additionalProperties": false,
-  "required": ["metadata", "ledger", "candidates", "findings", "source_manifest"],
+  "required": ["metadata", "ledger", "candidates", "findings", "source_manifest", "threat_model"],
   "properties": {
     "metadata": {"$ref": "#/$defs/metadata"},
-    "ledger": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
-    "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
-    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
-    "source_manifest": {"$ref": "#/$defs/sourceManifest"}
+    "ledger": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/unit"}
+    },
+    "candidates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/candidate"}
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "source_manifest": {"$ref": "#/$defs/sourceManifest"},
+    "threat_model": {"$ref": "#/$defs/threatModel"}
   },
   "$defs": {
     "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
-    "texts": {"type": "array", "items": {"$ref": "#/$defs/text"}, "uniqueItems": true},
-    "unitIDs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}},
+    "texts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/text"},
+      "uniqueItems": true
+    },
+    "unitIDs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}
+    },
     "invariant": {"type": "string", "pattern": "^AGENT-INV-00[1-9]$|^AGENT-INV-01[0-2]$"},
     "location": {
       "type": "object",
@@ -27,58 +46,43 @@
         "summary": {"$ref": "#/$defs/text"}
       }
     },
-    "locations": {"type": "array", "items": {"$ref": "#/$defs/location"}},
+    "locations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/location"}
+    },
     "validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["method", "reference", "result", "limitations", "execution_id"],
+      "required": ["method", "reference", "result", "limitations", "execution_id", "id", "proves", "source_locations"],
       "properties": {
-        "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation"]},
+        "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation", "deployment_configuration", "provider_contract", "real_model_sample", "static_interleaving"]},
         "reference": {"$ref": "#/$defs/text"},
         "result": {"$ref": "#/$defs/text"},
         "limitations": {"$ref": "#/$defs/texts"},
-        "execution_id": {"type": ["string", "null"], "minLength": 1}
+        "execution_id": {"type": ["string", "null"], "minLength": 1},
+        "id": {"$ref": "#/$defs/text"},
+        "proves": {"$ref": "#/$defs/texts"},
+        "source_locations": {"$ref": "#/$defs/locations"}
       }
     },
     "finalReview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "reviewer_id", "evidence", "source_manifest_hash"],
+      "required": ["status", "reviewer_id", "evidence", "source_manifest_hash", "threat_model_hash"],
       "properties": {
         "status": {"enum": ["pending", "passed", "changes_required", "unavailable"]},
         "reviewer_id": {"type": ["string", "null"], "minLength": 1},
         "evidence": {"$ref": "#/$defs/texts"},
-        "source_manifest_hash": {"anyOf": [{"type": "string", "pattern": "^[a-f0-9]{64}$"}, {"type": "null"}]}
+        "source_manifest_hash": {"anyOf": [{"type": "string", "pattern": "^[a-f0-9]{64}$"}, {"type": "null"}]},
+        "threat_model_hash": {"anyOf": [{"type": "string", "pattern": "^[a-f0-9]{64}$"}, {"type": "null"}]}
       }
     },
     "metadata": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "schema_version",
-        "run_id",
-        "repository",
-        "revision",
-        "working_tree",
-        "scope",
-        "exclusions",
-        "run_status",
-        "incomplete_reason",
-        "independence",
-        "agents",
-        "budget",
-        "final_review",
-        "evidence_slices",
-        "limitations",
-        "source_manifest_hash",
-        "audit_mode",
-        "allow_in_target_output",
-        "execution_policy",
-        "execution_runs",
-        "coverage_reviews"
-      ],
+      "required": ["schema_version", "run_id", "repository", "revision", "working_tree", "scope", "exclusions", "run_status", "incomplete_reason", "independence", "agents", "budget", "final_review", "evidence_slices", "limitations", "source_manifest_hash", "audit_mode", "allow_in_target_output", "execution_policy", "execution_runs", "coverage_reviews", "threat_model_hash", "assurance", "independence_level", "host_attestation"],
       "properties": {
-        "schema_version": {"const": 2},
+        "schema_version": {"const": 3},
         "run_id": {"$ref": "#/$defs/text"},
         "repository": {"$ref": "#/$defs/text"},
         "revision": {"$ref": "#/$defs/text"},
@@ -94,12 +98,17 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "role", "unit_ids", "source_manifest_hash"],
+            "required": ["id", "role", "unit_ids", "source_manifest_hash", "threat_model_hash"],
             "properties": {
               "id": {"$ref": "#/$defs/text"},
               "role": {"enum": ["parent", "hunter", "verifier", "reviewer", "coverage_critic"]},
-              "unit_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}},
-              "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+              "unit_ids": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}
+              },
+              "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
             }
           }
         },
@@ -107,7 +116,10 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["max_invocations", "used_invocations"],
-          "properties": {"max_invocations": {"type": ["integer", "null"], "minimum": 0}, "used_invocations": {"type": "integer", "minimum": 0}}
+          "properties": {
+            "max_invocations": {"type": ["integer", "null"], "minimum": 0},
+            "used_invocations": {"type": "integer", "minimum": 0}
+          }
         },
         "final_review": {"$ref": "#/$defs/finalReview"},
         "evidence_slices": {
@@ -130,28 +142,24 @@
         "audit_mode": {"enum": ["full", "focused"]},
         "allow_in_target_output": {"type": "boolean"},
         "execution_policy": {"enum": ["static_only", "sandboxed"]},
-        "execution_runs": {"type": "array", "items": {"$ref": "#/$defs/execution"}},
-        "coverage_reviews": {"type": "array", "items": {"$ref": "#/$defs/coverageReview"}}
+        "execution_runs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/execution"}
+        },
+        "coverage_reviews": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/coverageReview"}
+        },
+        "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "assurance": {"$ref": "#/$defs/assurance"},
+        "independence_level": {"enum": ["declared", "host_attested"]},
+        "host_attestation": {"anyOf": [{"$ref": "#/$defs/hostAttestation"}, {"type": "null"}]}
       }
     },
     "unit": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "subsystem",
-        "boundary",
-        "path_variant",
-        "attack_class",
-        "invariant",
-        "priority",
-        "status",
-        "hunter_ids",
-        "evidence",
-        "result",
-        "reason",
-        "candidate_ids"
-      ],
+      "required": ["id", "subsystem", "boundary", "path_variant", "attack_class", "invariant", "priority", "status", "hunter_ids", "evidence", "result", "reason", "candidate_ids"],
       "properties": {
         "id": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"},
         "subsystem": {"$ref": "#/$defs/text"},
@@ -165,41 +173,23 @@
         "evidence": {"$ref": "#/$defs/locations"},
         "result": {"type": ["string", "null"], "minLength": 1},
         "reason": {"type": ["string", "null"], "minLength": 1},
-        "candidate_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"}}
+        "candidate_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"}
+        }
       }
     },
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "status",
-        "fingerprint",
-        "unit_ids",
-        "title",
-        "invariant",
-        "root_cause",
-        "source",
-        "control",
-        "sink",
-        "attacker",
-        "principal",
-        "execution_identity",
-        "affected_resource",
-        "boundary",
-        "control_failure",
-        "impact",
-        "preconditions",
-        "counterevidence",
-        "source_manifest_hash"
-      ],
+      "required": ["id", "status", "fingerprint", "unit_ids", "title", "root_cause", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "counterevidence", "source_manifest_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_route"],
       "properties": {
         "id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
         "status": {"enum": ["pending", "adjudicated"]},
         "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "unit_ids": {"$ref": "#/$defs/unitIDs"},
         "title": {"$ref": "#/$defs/text"},
-        "invariant": {"$ref": "#/$defs/invariant"},
         "root_cause": {"$ref": "#/$defs/text"},
         "source": {"$ref": "#/$defs/location"},
         "control": {"$ref": "#/$defs/location"},
@@ -213,45 +203,35 @@
         "impact": {"$ref": "#/$defs/text"},
         "preconditions": {"$ref": "#/$defs/texts"},
         "counterevidence": {"$ref": "#/$defs/texts"},
-        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "primary_invariant": {"$ref": "#/$defs/invariant"},
+        "contributing_invariants": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/invariant"},
+          "uniqueItems": true
+        },
+        "exploit_chain": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/chainStep"}
+        },
+        "delegation_provenance": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/delegation"}
+        },
+        "minimum_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/requirement"}
+        },
+        "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "assumption_ids": {"$ref": "#/$defs/texts"},
+        "capability_ids": {"$ref": "#/$defs/texts"},
+        "attacker_route": {"enum": ["direct_input", "model_mediated"]}
       }
     },
     "finding": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "candidate_id",
-        "unit_ids",
-        "fingerprint",
-        "title",
-        "confidence",
-        "severity",
-        "severity_rationale",
-        "invariant",
-        "source",
-        "control",
-        "sink",
-        "attacker",
-        "principal",
-        "execution_identity",
-        "affected_resource",
-        "boundary",
-        "control_failure",
-        "impact",
-        "preconditions",
-        "verifier_id",
-        "verifier_evidence",
-        "validation",
-        "counterevidence",
-        "missing_fact",
-        "validation_plan",
-        "rejection_reason",
-        "recommendation",
-        "regression_assertion",
-        "source_manifest_hash",
-        "verified_candidate_hash"
-      ],
+      "required": ["id", "candidate_id", "unit_ids", "fingerprint", "title", "confidence", "severity", "severity_rationale", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "verifier_id", "verifier_evidence", "validation", "counterevidence", "missing_fact", "validation_plan", "rejection_reason", "recommendation", "regression_assertion", "source_manifest_hash", "verified_candidate_hash", "primary_invariant", "contributing_invariants", "exploit_chain", "delegation_provenance", "minimum_evidence", "threat_model_hash", "assumption_ids", "capability_ids", "attacker_reachability", "effect_reachability", "requirement_results", "attacker_route"],
       "properties": {
         "id": {"type": "string", "pattern": "^AGENT-[0-9]{3,}$"},
         "candidate_id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
@@ -261,7 +241,6 @@
         "confidence": {"enum": ["confirmed", "needs_validation", "rejected"]},
         "severity": {"enum": ["critical", "high", "medium", "low", "informational", null]},
         "severity_rationale": {"type": ["string", "null"], "minLength": 1},
-        "invariant": {"$ref": "#/$defs/invariant"},
         "source": {"$ref": "#/$defs/location"},
         "control": {"$ref": "#/$defs/location"},
         "sink": {"$ref": "#/$defs/location"},
@@ -275,7 +254,10 @@
         "preconditions": {"$ref": "#/$defs/texts"},
         "verifier_id": {"$ref": "#/$defs/text"},
         "verifier_evidence": {"allOf": [{"$ref": "#/$defs/locations"}, {"minItems": 1}]},
-        "validation": {"type": "array", "items": {"$ref": "#/$defs/validation"}},
+        "validation": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/validation"}
+        },
         "counterevidence": {"$ref": "#/$defs/texts"},
         "missing_fact": {"type": ["string", "null"], "minLength": 1},
         "validation_plan": {"type": ["string", "null"], "minLength": 1},
@@ -283,7 +265,35 @@
         "recommendation": {"type": ["string", "null"], "minLength": 1},
         "regression_assertion": {"type": ["string", "null"], "minLength": 1},
         "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "verified_candidate_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        "verified_candidate_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "primary_invariant": {"$ref": "#/$defs/invariant"},
+        "contributing_invariants": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/invariant"},
+          "uniqueItems": true
+        },
+        "exploit_chain": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/chainStep"}
+        },
+        "delegation_provenance": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/delegation"}
+        },
+        "minimum_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/requirement"}
+        },
+        "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "assumption_ids": {"$ref": "#/$defs/texts"},
+        "capability_ids": {"$ref": "#/$defs/texts"},
+        "attacker_reachability": {"$ref": "#/$defs/reachability"},
+        "effect_reachability": {"$ref": "#/$defs/reachability"},
+        "requirement_results": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/requirementResult"}
+        },
+        "attacker_route": {"enum": ["direct_input", "model_mediated"]}
       }
     },
     "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
@@ -304,7 +314,10 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["sha256", "size"],
-            "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "size": {"type": "integer", "minimum": 0}}
+            "properties": {
+              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "size": {"type": "integer", "minimum": 0}
+            }
           }
         }
       }
@@ -322,16 +335,7 @@
         "controls": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "network_disabled",
-            "source_read_only",
-            "scratch_only_writes",
-            "credentials_absent",
-            "artifacts_inaccessible",
-            "dependency_installation_disabled",
-            "synthetic_data_only",
-            "environment_allowlist"
-          ],
+          "required": ["network_disabled", "source_read_only", "scratch_only_writes", "credentials_absent", "artifacts_inaccessible", "dependency_installation_disabled", "synthetic_data_only", "environment_allowlist"],
           "properties": {
             "network_disabled": {"const": true},
             "source_read_only": {"const": true},
@@ -375,16 +379,192 @@
     "coverageReview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage", "status", "critic_id", "source_manifest_hash", "ledger_snapshot", "ledger_hash", "evidence", "missing_units"],
+      "required": ["stage", "status", "critic_id", "source_manifest_hash", "ledger_snapshot", "ledger_hash", "evidence", "missing_units", "threat_model_hash"],
       "properties": {
         "stage": {"enum": ["planning", "final"]},
         "status": {"enum": ["passed", "changes_required"]},
         "critic_id": {"$ref": "#/$defs/text"},
         "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "ledger_snapshot": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
+        "ledger_snapshot": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/unit"}
+        },
         "ledger_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "evidence": {"allOf": [{"$ref": "#/$defs/locations"}, {"minItems": 1}]},
-        "missing_units": {"type": "array", "items": {"$ref": "#/$defs/missingUnit"}}
+        "missing_units": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/missingUnit"}
+        },
+        "threat_model_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "threatModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "anchors", "assumptions", "attacker_capabilities", "limitations"],
+      "properties": {
+        "scope": {"$ref": "#/$defs/texts"},
+        "anchors": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/anchor"}
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/assumption"}
+        },
+        "attacker_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "anchor_ids", "evidence"],
+            "properties": {
+              "id": {"$ref": "#/$defs/text"},
+              "description": {"$ref": "#/$defs/text"},
+              "anchor_ids": {"$ref": "#/$defs/texts"},
+              "evidence": {"$ref": "#/$defs/locations"}
+            }
+          }
+        },
+        "limitations": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "component", "trust", "rationale", "evidence"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "component": {"$ref": "#/$defs/text"},
+        "trust": {"enum": ["trusted", "untrusted", "unknown"]},
+        "rationale": {"$ref": "#/$defs/text"},
+        "evidence": {"$ref": "#/$defs/locations"}
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "status", "dimension", "anchor_ids", "evidence", "reference"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "statement": {"$ref": "#/$defs/text"},
+        "status": {"enum": ["established", "assumed", "unknown", "refuted"]},
+        "dimension": {"enum": ["source", "runtime", "deployment", "external"]},
+        "anchor_ids": {"$ref": "#/$defs/texts"},
+        "evidence": {"$ref": "#/$defs/locations"},
+        "reference": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}
+      }
+    },
+    "assuranceDimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "basis", "limitations"],
+      "properties": {
+        "status": {"enum": ["not_assessed", "partial", "assessed", "not_applicable"]},
+        "basis": {"$ref": "#/$defs/texts"},
+        "limitations": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "runtime", "deployment", "external"],
+      "properties": {
+        "source": {"$ref": "#/$defs/assuranceDimension"},
+        "runtime": {"$ref": "#/$defs/assuranceDimension"},
+        "deployment": {"$ref": "#/$defs/assuranceDimension"},
+        "external": {"$ref": "#/$defs/assuranceDimension"}
+      }
+    },
+    "reachability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "claim", "evidence_ids", "missing_facts"],
+      "properties": {
+        "status": {"enum": ["established", "unresolved", "refuted"]},
+        "claim": {"$ref": "#/$defs/text"},
+        "evidence_ids": {"$ref": "#/$defs/texts"},
+        "missing_facts": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "claim", "description", "step_id", "assumption_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "claim": {"enum": ["source_control", "attacker_entry", "model_inducement", "race_interleaving", "network_route", "remote_write_outcome", "delegation_scope", "human_decision", "failure_propagation"]},
+        "description": {"$ref": "#/$defs/text"},
+        "step_id": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+        "assumption_ids": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "requirementResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_id", "status", "evidence_ids", "rationale", "missing_facts"],
+      "properties": {
+        "requirement_id": {"$ref": "#/$defs/text"},
+        "status": {"enum": ["satisfied", "unresolved", "refuted"]},
+        "evidence_ids": {"$ref": "#/$defs/texts"},
+        "rationale": {"$ref": "#/$defs/text"},
+        "missing_facts": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "chainStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "unit_id", "invariant", "root_cause", "source", "control", "sink", "input_state", "output_state", "boundary", "control_failure"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "unit_id": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"},
+        "invariant": {"$ref": "#/$defs/invariant"},
+        "root_cause": {"$ref": "#/$defs/text"},
+        "source": {"$ref": "#/$defs/location"},
+        "control": {"$ref": "#/$defs/location"},
+        "sink": {"$ref": "#/$defs/location"},
+        "input_state": {"$ref": "#/$defs/text"},
+        "output_state": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "control_failure": {"$ref": "#/$defs/text"}
+      }
+    },
+    "delegation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from_identity", "to_identity", "grant_source", "granted_scope", "effective_scope", "restriction", "unit_id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "from_identity": {"$ref": "#/$defs/text"},
+        "to_identity": {"$ref": "#/$defs/text"},
+        "grant_source": {"$ref": "#/$defs/location"},
+        "granted_scope": {"$ref": "#/$defs/texts"},
+        "effective_scope": {"$ref": "#/$defs/texts"},
+        "restriction": {"$ref": "#/$defs/text"},
+        "unit_id": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}
+      }
+    },
+    "hostAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key_id", "bundle_hash", "contexts", "signature"],
+      "properties": {
+        "key_id": {"$ref": "#/$defs/text"},
+        "bundle_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "contexts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["agent_id", "context_id", "isolation"],
+            "properties": {
+              "agent_id": {"$ref": "#/$defs/text"},
+              "context_id": {"$ref": "#/$defs/text"},
+              "isolation": {"$ref": "#/$defs/text"}
+            }
+          }
+        },
+        "signature": {"type": "string", "pattern": "^[a-f0-9]{128}$"}
       }
     }
   }

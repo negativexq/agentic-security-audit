@@ -22,21 +22,31 @@ def initial_bundle(repository: str, scope: list[str], working_tree: str,
         "schema_version": 1, "repository": repository, "git_commit": None,
         "dirty": None, "diff_sha256": None, "files": {}}
     digest = canonical_hash(manifest)
+    threat_model = {"scope": scope, "anchors": [], "assumptions": [],
+                    "attacker_capabilities": [], "limitations": ["Threat model not yet reconstructed."]}
+    threat_digest = canonical_hash(threat_model)
     return {
         "metadata": {
-            "schema_version": 2, "run_id": f"audit-{uuid4().hex[:12]}",
+            "schema_version": 3, "run_id": f"audit-{uuid4().hex[:12]}",
             "repository": repository, "revision": manifest["git_commit"] or digest, "working_tree": working_tree,
             "source_manifest_hash": digest, "audit_mode": audit_mode,
             "allow_in_target_output": allow_in_target,
             "execution_policy": "static_only", "execution_runs": [], "coverage_reviews": [],
             "scope": scope, "exclusions": [], "run_status": "incomplete",
             "incomplete_reason": "initialized_not_reviewed", "independence": "unavailable",
-            "agents": [{"id": "parent", "role": "parent", "unit_ids": [], "source_manifest_hash": digest}],
+            "threat_model_hash": threat_digest,
+            "assurance": {dimension: {"status": "not_assessed", "basis": [], "limitations": ["Not assessed."]}
+                          for dimension in ("source", "runtime", "deployment", "external")},
+            "independence_level": "declared", "host_attestation": None,
+            "agents": [{"id": "parent", "role": "parent", "unit_ids": [], "source_manifest_hash": digest,
+                        "threat_model_hash": threat_digest}],
             "budget": {"max_invocations": None, "used_invocations": 0},
-            "final_review": {"status": "pending", "reviewer_id": None, "evidence": [], "source_manifest_hash": None},
+            "final_review": {"status": "pending", "reviewer_id": None, "evidence": [], "source_manifest_hash": None,
+                             "threat_model_hash": None},
             "evidence_slices": [], "limitations": ["No audit pass or target tests have run."]
         },
-        "ledger": [], "candidates": [], "findings": [], "source_manifest": manifest
+        "ledger": [], "candidates": [], "findings": [], "source_manifest": manifest,
+        "threat_model": threat_model
     }
 
 

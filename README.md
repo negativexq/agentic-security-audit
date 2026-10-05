@@ -140,6 +140,7 @@ Full audits produce:
 | `candidates.json` | Admitted allegations, root-cause fingerprints and adjudication status. |
 | `findings.json` | Independently adjudicated records, including rejected hypotheses. |
 | `source-manifest.json` | Frozen Git/working-tree identity and SHA-256/size of source files. |
+| `threat-model.json` / `threat-model.md` | Trust anchors, attacker capabilities, assumptions and unknowns; Markdown is derived. |
 | `run-metadata.json` | Source revision, scope, exclusions, agent roles, budget, review status and evidence slices. |
 | `REPORT.md` | Run status, coverage, findings, gaps and limitations. |
 | `FINDINGS-DETAIL.md` | Source/control/sink traces, verifier evidence and repair guidance. |
@@ -177,7 +178,11 @@ python skills/agentic-security-audit/scripts/render_report.py AUDIT_OUTPUT
 python skills/agentic-security-audit/scripts/validate_audit.py AUDIT_OUTPUT
 ```
 
-Artifact schema v2 requires the new source, critic and verifier bindings. Older v1 bundles need a new audit pass rather than synthetic migration. The validator checks schema, cross-links, coverage states, declared role independence, finding dispositions, invocation accounting, candidate hashes and immutable allegations, critic snapshots, attack-class/invariant mapping, source hashes and report consistency. It cannot prove source claims, OS sandbox enforcement or actual context isolation. Read the [artifact contract](skills/agentic-security-audit/references/artifact-contract.md) for record fields and evidence requirements.
+Artifact schema v3 binds source and threat models, separates attacker/effect reachability, and accounts for composite chains, delegation provenance and claim-specific minimum evidence. Older v1/v2 confirmations need reassessment rather than synthetic migration. The validator checks structure, cross-links, coverage, role separation, immutable allegations, evidence requirements, snapshot hashes and report consistency. It cannot prove source interpretations, discover undeclared dependencies or create OS isolation. Read the [artifact contract](skills/agentic-security-audit/references/artifact-contract.md) and [claim/evidence rules](skills/agentic-security-audit/references/claim-evidence.md).
+
+`assurance.source/runtime/deployment/external` records each dimension separately; `complete` can describe a finished source pass with unassessed deployment/provider behavior. Confirmation requires both reachability axes established, all necessary chain requirements satisfied and necessary assumptions established. Model-mediated entry needs observed model-inducement evidence; a direct proposal is insufficient.
+
+Independence defaults to `declared`. Hosts can optionally provide Ed25519-signed bundle/context receipts verified with externally pinned public keys. Install `scripts/requirements-attestation.txt` from the skill folder and supply `--trusted-host-keys /host/trusted-keys.json` to both helpers. This verifies the trusted host's attestation; the package does not launch isolated agents, generate signing keys or establish isolation beyond the host's guarantees.
 
 ## Frequently asked questions
 

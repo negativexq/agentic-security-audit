@@ -21,9 +21,11 @@ ATTACK_CLASS_INVARIANTS = {
 ATTACK_CLASS_INVARIANTS = {key: {f"AGENT-INV-{n:03}" for n in values}
                            for key, values in ATTACK_CLASS_INVARIANTS.items()}
 ALLEGATION_FIELDS = (
-    "title", "invariant", "source", "control", "sink", "attacker", "principal",
+    "title", "primary_invariant", "source", "control", "sink", "attacker", "principal",
     "execution_identity", "affected_resource", "boundary", "control_failure",
-    "impact", "preconditions", "source_manifest_hash",
+    "impact", "preconditions", "source_manifest_hash", "threat_model_hash",
+    "contributing_invariants", "exploit_chain", "delegation_provenance",
+    "minimum_evidence", "assumption_ids", "capability_ids", "attacker_route",
 )
 COVERAGE_FIELDS = ("subsystem", "boundary", "path_variant", "attack_class", "invariant")
 

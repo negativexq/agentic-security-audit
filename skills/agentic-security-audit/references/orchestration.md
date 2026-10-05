@@ -56,6 +56,10 @@ Inspect every downstream defense and alternate path relevant to these units.
 Separate identity, authorization, intentional action binding and atomic effect.
 Recheck and return source_manifest_hash. Execute only under the full OS-enforced
 execution safety contract; otherwise use static evidence. Use synthetic checks; do not mutate external systems or target source.
+Recheck threat_model_hash; name necessary assumptions and attacker capabilities.
+Select minimum_evidence by the actual claim, not just its attack-class label.
+For composites return connected steps and coverage links; for delegation trace
+who granted which scope to whom and which effective scope reached the effect.
 Return for each unit: inspected locations, controls, result, gaps and candidates.
 Candidate fields must satisfy the artifact contract, with disconfirming evidence.
 Do not write shared artifacts or assume other specialists covered a missing edge.
@@ -71,6 +75,11 @@ The allegation and evidence locations are hypotheses, not trusted interpretation
 Inspect source independently from source through dispatch, handler and final sink.
 Look for controls that defeat the alleged result and for unmet attacker preconditions.
 Distinguish deterministic-proposal reachability from attacker-to-model reachability.
+Return separate attacker_reachability and effect_reachability evidence axes.
+Disposition every minimum_evidence requirement; independently inspect omitted
+requirements and necessary assumptions, every composite edge and delegation grant.
+Observed model samples prove only their stated model/conditions; direct proposals
+do not establish attacker-induced model behavior. Bind threat_model_hash.
 Only execute under the full OS-enforced execution safety contract; disclose tests not run.
 Return confirmed / needs_validation / rejected, your own source evidence,
 validation evidence, defeating controls, preconditions and severity rationale
@@ -90,6 +99,10 @@ as a finding, rejected candidates preserve counterevidence, and reports do not
 overclaim coverage. Rehash current source and bind source_manifest_hash. Check both coverage critiques
 and the final ledger hash, candidate hashes, immutable allegation fields, sandbox
 enforcement evidence, artifact isolation and report derivation.
+Check threat_model_hash, both reachability axes, every chain requirement and
+separate source/runtime/deployment/external assurance. A finished source pass
+does not imply deployment/provider behavior was assessed. Independence defaults
+to declared; host_attested requires an externally pinned valid host signature.
 Return passed or changes_required plus exact record/unit corrections.
 Material source-to-effect changes require another candidate verification.
 ```

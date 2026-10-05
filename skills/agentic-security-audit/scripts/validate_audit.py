@@ -22,6 +22,7 @@ FILES = {
     "candidates": "candidates.json",
     "findings": "findings.json",
     "source_manifest": "source-manifest.json",
+    "threat_model": "threat-model.json",
 }
 SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "bundle.schema.json"
 
@@ -51,12 +52,16 @@ def load_bundle(directory: Path) -> dict:
 def fingerprint(candidate: dict) -> str:
     """Stable across line shifts and wording changes; root_cause is a stable key."""
     identity = [candidate["root_cause"], candidate["boundary"],
-                candidate["sink"]["path"], candidate["sink"]["symbol"]]
+                candidate["control"]["path"], candidate["control"]["symbol"],
+                candidate["sink"]["path"], candidate["sink"]["symbol"],
+                [[step["root_cause"], step["boundary"], step["control"]["path"],
+                  step["control"]["symbol"], step["sink"]["path"], step["sink"]["symbol"]]
+                 for step in candidate["exploit_chain"]]]
     raw = json.dumps(identity, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def validate_bundle(bundle: dict) -> list[str]:
+def validate_bundle(bundle: dict, trusted_host_keys: dict | None = None) -> list[str]:
     schema = read_json(SCHEMA)
     Draft202012Validator.check_schema(schema)
     errors = []
@@ -137,7 +142,7 @@ def validate_bundle(bundle: dict) -> list[str]:
         cid = candidate["id"]
         require(candidate["fingerprint"] == fingerprint(candidate), f"{cid}: invalid fingerprint")
         require(candidate["source_manifest_hash"] == snapshot, f"{cid}: source snapshot differs")
-        require(any(uid in units and units[uid]["invariant"] == candidate["invariant"]
+        require(any(uid in units and units[uid]["invariant"] == candidate["primary_invariant"]
                     for uid in candidate["unit_ids"]), f"{cid}: invariant lacks linked coverage unit")
         require((candidate["status"] == "adjudicated") == (cid in adjudications), f"{cid}: disposition mismatch")
         for uid in candidate["unit_ids"]:
@@ -187,6 +192,8 @@ def validate_bundle(bundle: dict) -> list[str]:
     for record in list(candidates.values()) + findings:
         locations.extend(record[field] for field in ("source", "control", "sink"))
         locations.extend(record.get("verifier_evidence", []))
+    from audit_claims import validate_claims
+    validate_claims(bundle, require, locations, trusted_host_keys)
 
     # Critics look for omitted paths, not whether existing findings are correct.
     latest_reviews = {}
@@ -292,10 +299,15 @@ def validate_bundle(bundle: dict) -> list[str]:
 
 
 def validate_directory(directory: Path, check_reports: bool = True, check_source: bool = True,
-                       source_root: Path | None = None) -> list[str]:
+                       source_root: Path | None = None, trusted_host_keys_path: Path | None = None) -> list[str]:
     try:
         bundle = load_bundle(directory)
-        errors = validate_bundle(bundle)
+        trusted_keys = None
+        if trusted_host_keys_path:
+            from audit_claims import load_trusted_keys
+            trusted_keys = load_trusted_keys(trusted_host_keys_path,
+                                            source_root or Path(bundle["metadata"]["repository"]), directory)
+        errors = validate_bundle(bundle, trusted_keys)
         if errors:
             return errors
         root = source_root or Path(bundle["metadata"]["repository"])
@@ -321,8 +333,10 @@ def main() -> int:
     parser.add_argument("directory", type=Path)
     parser.add_argument("--source-root", type=Path, help="Relocated copy of the same frozen source")
     parser.add_argument("--offline", action="store_true", help="Structural validation only; no current-source verification")
+    parser.add_argument("--trusted-host-keys", type=Path, help="External trusted Ed25519 public-key mapping; never trust keys from the bundle")
     args = parser.parse_args()
-    errors = validate_directory(args.directory, check_source=not args.offline, source_root=args.source_root)
+    errors = validate_directory(args.directory, check_source=not args.offline, source_root=args.source_root,
+                                trusted_host_keys_path=args.trusted_host_keys)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)

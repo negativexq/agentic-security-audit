@@ -20,6 +20,8 @@ Read [invariants](references/invariants.md) and [artifact contract](references/a
 
 ## 1. Reconstruct agentic authority
 
+Read [claim and evidence rules](references/claim-evidence.md). Build `threat-model.json` first: trust anchors, attacker capabilities, necessary assumptions and unknown source/runtime/deployment/external facts. Bind its canonical hash alongside the source manifest in every independent pass and candidate. Threat assumptions are not established merely because a component is named trusted. Changes require reassessment and fresh affected verification.
+
 Start at privileged writes and sensitive reads, then trace backward to all reachable callers. Map agents, model calls, tool registries/handlers, MCP clients/servers, retrieval and ingestion, memory writers/readers, credentials, human approvals, durable checkpoints, background jobs, delegated agents, external APIs and output destinations. Explicitly record components absent from source and components whose existence is unknown.
 
 For each path, record the requesting principal, effective execution identity, tenant/customer scope, attacker-controlled fields, authoritative inputs, policy gate, intentional-request or approval binding, last trusted enforcement point, and actual effect/receipt. Compare direct API, model, queued, batch, retry, resume, recovery, human and delegation paths. Do not infer gates from names: cite file, symbol and line at the audited revision for each graph edge. Mark unobserved edges as unknown.
@@ -46,6 +48,8 @@ Each hunter searches for a violated invariant, follows the full source-to-effect
 
 ## 4. Gate candidates
 
+Use `primary_invariant`; record optional composite contributors as an empty or populated `contributing_invariants` array and an ordered `exploit_chain`. Each necessary step needs matching coverage, connected authority states and its own evidence requirement. Keep independently fixable causes distinct and avoid counting aggregate impact twice. Record delegated authority origins and scope attenuation in `delegation_provenance`. Bind candidate assumptions, attacker capabilities, `attacker_route` and claim-specific `minimum_evidence` before verification.
+
 Admit a candidate only with **attacker-controlled source + crossed boundary + broken/missing authoritative control + reachable security effect**. Name attacker, affected principal/resource, effective identity and necessary preconditions. Same-principal self-impact and an intentional authorized request are not confused-deputy defects. An unwanted action using a victim's valid permissions can still violate action binding.
 
 Store admitted records in `candidates.json`, with source/control/sink evidence, the source manifest hash and a deterministic fingerprint. Deduplicate by root cause, boundary, sink and failed control, preserving all coverage-unit links. Separate independently fixable failures. A suspicious path without an identified effect stays a ledger hypothesis, not a finding. Do not assign severity before independent confirmation.
@@ -60,11 +64,15 @@ Verifier verdicts:
 - `needs_validation`: a specific source-grounded hypothesis with an exact unresolved runtime/deployment/provider fact and a bounded owner/local check. Severity is null.
 - `rejected`: source evidence shows the claimed effect is unreachable, authorized, prevented, or incorrectly described. Preserve the defeating control and reason; severity is null.
 
+Record attacker and effect reachability separately, with explicit evidence IDs and unresolved facts. Confirmation requires both established, every necessary claim requirement satisfied, and necessary threat assumptions established. Model-mediated entry requires observed model-inducement evidence; an arbitrary malicious proposal only proves dispatch behavior. Use static interleaving proofs or bounded executed tests for race claims, provider contracts for dependent remote outcomes, and deployment configuration for dependent network routes. Verify every composite edge and control; an unresolved necessary step keeps the aggregate unresolved.
+
 No verifier available is an incomplete audit, not a `needs_validation` finding. Pending candidates remain outside `findings.json`. Inspect code after arguments are final and before every effect, including database/external concurrency guarantees. Keep model-quality warnings separate from security outcomes; a hallucinated proposal blocked by software is evidence of containment.
 
 Write final records to `findings.json`. Use a second fresh coverage critic after candidate adjudication to independently search for omitted coverage; do not supply finding narratives. Integrate and hunt new units, adjudicate their candidates, and repeat final criticism until it passes on the current ledger. A stale or unresolved critique prevents completion. Have a fresh final reviewer, distinct from hunters, candidate verifiers and coverage critics, check final record claims, severity, source revision, deduplication, evidence and ledger gaps. Return materially changed findings to a new verifier. Record this review in `run-metadata.json`; do not self-certify it. The instructions govern independence; the artifact validator checks declared roles, not whether the host actually isolated contexts.
 
 ## 6. Derive and validate the bundle
+
+Include structured `threat-model.json` and derived `threat-model.md`. Preserve `assurance.source/runtime/deployment/external` separately from run status; a source-complete pass can leave deployment and provider behavior unassessed. Default independence evidence is `declared`. Only use `host_attested` when an external trusted host has signed the full final bundle and context inventory; verify with externally pinned public keys. The helpers do not create host isolation or issue attestations. See the claim/evidence reference for the optional adapter contract and failure rules.
 
 Deliver `architecture.md`, `authority-map.md`, `coverage-ledger.json`, `candidates.json`, `findings.json`, `source-manifest.json`, `run-metadata.json`, `REPORT.md` and `FINDINGS-DETAIL.md`. Findings and coverage use the packaged schemas. Use the helpers under `scripts/` as documented in the artifact contract; render reports from adjudicated records so prose and JSON agree.
 
