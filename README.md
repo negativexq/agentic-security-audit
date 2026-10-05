@@ -96,18 +96,18 @@ Keep the entire [`skills/agentic-security-audit`](skills/agentic-security-audit)
 
 If your agent supports native skill discovery, register this folder using that environment's own convention. Native registration is optional; direct loading of the instructions works without a product-specific command or directory layout. Adjust the paths in the usage examples to where you placed the folder.
 
-The package supplies instructions and artifact helpers. The host executes the investigation and provides agent isolation. Independent hunters, verifiers and the final reviewer require actual separate agent contexts. When these are unavailable, the skill supports sequential investigation, preserves pending candidates and reports the full audit as `incomplete`.
+The package supplies instructions and artifact helpers. The host executes the investigation and provides agent isolation. Independent hunters, verifiers, coverage critics and the final reviewer require actual separate agent contexts. When these are unavailable, the skill supports sequential investigation, preserves pending candidates and reports the full audit as `incomplete`.
 
 ## Audit workflow
 
 | Phase | Work | Evidence produced |
 | --- | --- | --- |
 | Reconnaissance | Map principals, credentials, context sources, tools, stores, approvals and alternate execution paths. | Architecture and source-backed authority map. |
-| Coverage planning | Assign units by subsystem, boundary/path variant, attack class and invariant. | Coverage ledger with explicit scope and gaps. |
+| Coverage planning and criticism | Assign units by subsystem, boundary/path variant, attack class and invariant; a fresh critic searches source for omitted paths. | Ledger, input snapshot and missing-unit records. |
 | Scoped hunting | Search assigned paths for invariant violations and defeating controls. | Structured candidates and inspected-unit evidence. |
 | Candidate gate | Require a complete source-to-effect hypothesis and deduplicate root causes. | Admitted candidates linked to coverage units. |
 | Independent validation | Fresh verifiers prove, qualify or reject each candidate. | Adjudicated findings with validation and counterevidence. |
-| Final review and reporting | A distinct reviewer checks records and coverage; derive reports from JSON and validate the bundle. | Consistent machine-readable and human-readable output. |
+| Final coverage criticism, review and reporting | A second critic searches for omissions; a distinct reviewer checks final records. Rehash source, derive reports and validate. | Current-ledger critique and consistent output. |
 
 Five [specialist hunter roles](skills/agentic-security-audit/references/orchestration.md) divide the investigation:
 
@@ -119,7 +119,7 @@ Five [specialist hunter roles](skills/agentic-security-audit/references/orchestr
 | Lifecycle | Approval binding, interruption, resume, recovery and revalidation. |
 | Integration | MCP, delegation, tool metadata, budgets and evidence integrity. |
 
-Hunters receive scoped assignments without other hunters' finding narratives. Only the parent writes shared artifacts. A candidate verifier must not have hunted the candidate; the final reviewer is distinct from both. Roles run in waves within the host's concurrency and the user's budget.
+Hunters receive scoped assignments without other hunters' finding narratives. Only the parent writes shared artifacts. Planning and final coverage critics use distinct fresh contexts and return omitted units without finding narratives. A candidate verifier must not have hunted the candidate; the final reviewer is distinct from hunters, verifiers and critics. Roles run in waves within the host's concurrency and the user's budget.
 
 ## Outputs and finding states
 
@@ -132,6 +132,7 @@ Full audits produce:
 | `coverage-ledger.json` | What was inspected, outstanding units, evidence and candidate links. |
 | `candidates.json` | Admitted allegations, root-cause fingerprints and adjudication status. |
 | `findings.json` | Independently adjudicated records, including rejected hypotheses. |
+| `source-manifest.json` | Frozen Git/working-tree identity and SHA-256/size of source files. |
 | `run-metadata.json` | Source revision, scope, exclusions, agent roles, budget, review status and evidence slices. |
 | `REPORT.md` | Run status, coverage, findings, gaps and limitations. |
 | `FINDINGS-DETAIL.md` | Source/control/sink traces, verifier evidence and repair guidance. |
@@ -144,7 +145,7 @@ Full audits produce:
 
 Pending candidates stay outside `findings.json`. Missing an independent verifier makes the audit incomplete; it does not convert an allegation into a `needs_validation` finding.
 
-`complete` means the selected pass finished: coverage units have evidence-backed dispositions, candidates are adjudicated, final independent review passed and bundle validation succeeds. It does not imply exhaustive coverage or certify the target as secure. Partial runs retain their evidence and exact incomplete reason.
+`complete` means the selected pass finished: coverage units have evidence-backed dispositions, both independent coverage critiques passed, candidates are adjudicated, final independent review passed and current-source bundle validation succeeds. A full audit requires at least one reviewed unit. It does not imply exhaustive coverage or certify the target as secure. Partial runs retain their evidence and exact incomplete reason.
 
 ## Artifact helpers
 
@@ -157,19 +158,19 @@ python -m pip install -r skills/agentic-security-audit/scripts/requirements.txt
 Create a fresh output directory for an explicitly requested audit:
 
 ```shell
-python skills/agentic-security-audit/scripts/init_audit.py .agentic-audit/run-001 --repository ./target-repo --revision REVIEWED_COMMIT --scope agent-runtime --working-tree clean
+python skills/agentic-security-audit/scripts/init_audit.py --repository ./target-repo --scope agent-runtime
 ```
 
-Replace the repository, revision, scope and working-tree values with the actual reviewed source identity. Initialization creates an incomplete bundle; it does not inspect the target or launch agents. The auditing agent fills the maps and records.
+Provide a local target repository and scope. Initialization reads and hashes source files and captures Git identity without running target code; it creates an incomplete bundle and launches no agents. It prints the fresh output path, defaulting to `~/agentic-security-audit/<repo>/run-<id>/` outside the target. Use that printed path below. `--revision` can assert an exact expected commit. In-target output requires explicit `--allow-in-target-output` and exclusion from target execution mounts. The auditing agent fills the maps and records.
 
 After updating the JSON artifacts, regenerate and validate the reports:
 
 ```shell
-python skills/agentic-security-audit/scripts/render_report.py .agentic-audit/run-001
-python skills/agentic-security-audit/scripts/validate_audit.py .agentic-audit/run-001
+python skills/agentic-security-audit/scripts/render_report.py AUDIT_OUTPUT
+python skills/agentic-security-audit/scripts/validate_audit.py AUDIT_OUTPUT
 ```
 
-The validator checks schema, cross-links, coverage states, declared role independence, finding dispositions, invocation accounting and report consistency. It cannot prove source claims or actual context isolation. Read the [artifact contract](skills/agentic-security-audit/references/artifact-contract.md) for record fields and evidence requirements.
+Artifact schema v2 requires the new source, critic and verifier bindings. Older v1 bundles need a new audit pass rather than synthetic migration. The validator checks schema, cross-links, coverage states, declared role independence, finding dispositions, invocation accounting, candidate hashes and immutable allegations, critic snapshots, attack-class/invariant mapping, source hashes and report consistency. It cannot prove source claims, OS sandbox enforcement or actual context isolation. Read the [artifact contract](skills/agentic-security-audit/references/artifact-contract.md) for record fields and evidence requirements.
 
 ## Frequently asked questions
 
@@ -179,7 +180,7 @@ agentic-security-audit is a reusable security audit skill for AI agent applicati
 
 ### How do I audit an AI agent application with this skill?
 
-Give your agent the skill folder and target repository, ask it to read `skills/agentic-security-audit/SKILL.md`, and define the audit scope. For a full pass, provide separate contexts for hunters, candidate verifiers and a final reviewer. Python helpers initialize and validate artifacts; they do not perform the investigation.
+Give your agent the skill folder and target repository, ask it to read `skills/agentic-security-audit/SKILL.md`, and define the audit scope. For a full pass, provide separate contexts for hunters, planning/final coverage critics, candidate verifiers and a final reviewer. Python helpers capture source identity, initialize and validate artifacts; they do not perform the investigation.
 
 ### Does it require a particular agent or model?
 
@@ -203,7 +204,7 @@ The audit compares the exact action shown or approved with the object executed, 
 
 ### What happens when independent agents are unavailable?
 
-The investigation can proceed through sequential scoped passes. Candidates stay pending, independence is recorded as unavailable, and the full audit remains incomplete until independent adjudication and final review are performed.
+The investigation can proceed through sequential scoped passes. Candidates stay pending, independence is recorded as unavailable, and the full audit remains incomplete until independent coverage criticism, adjudication and final review are performed.
 
 ### Does a complete audit mean the application is secure?
 
@@ -225,7 +226,7 @@ The tests exercise incomplete-run handling, candidate/verifier separation, cover
 
 ## Scope and evidence limits
 
-Audits use source inspection and bounded local checks with synthetic data. Target fixes and external mutations require separate scope. Unavailable deployment, identity-provider and external-service behavior remains explicit rather than assumed.
+Target-controlled execution requires an OS-enforced sandbox: no network, credential mounts or inherited secret environment; read-only source, isolated scratch writes, inaccessible audit artifacts, finite resource limits, offline dependencies and synthetic data. If the host cannot enforce every requirement, use static evidence and record exact unresolved runtime facts. Helpers record this contract; they do not create a sandbox. See [execution safety](skills/agentic-security-audit/references/execution-safety.md). Target fixes and external mutations require separate scope. Unavailable deployment, identity-provider and external-service behavior remains explicit rather than assumed.
 
 Deterministic control-plane tests, real-model samples and operational fault tests retain separate denominators. Reports do not turn those measurements into a synthetic security score.
 
@@ -240,3 +241,7 @@ Deterministic control-plane tests, real-model samples and operational fault test
 - [Testing AI Agents Without Pretending They Are Deterministic](https://omerfkoc.dev/writing/testing-ai-agents-without-pretending-they-are-deterministic)
 - [Decision, Authority, Execution](https://omerfkoc.dev/writing/decision-authority-execution-observability)
 - [Hard Gates + Frozen Hashes](https://omerfkoc.dev/writing/hard-gates-frozen-hashes)
+
+## License
+
+Copyright 2026 Ömer Faruk Koç. Licensed under [Apache-2.0](LICENSE).

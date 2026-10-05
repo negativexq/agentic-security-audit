@@ -16,11 +16,35 @@ Overlapping classes are deliberate; assign separate concrete paths to prevent du
 
 ## Parent ownership and context isolation
 
-Parent assigns unique agent IDs and coverage units, records invocation usage, consolidates results, computes fingerprints, reconciles evidence and writes shared artifacts. Hunters and verifiers return results or write only isolated scratch directories. Source access should be read-only when the host can enforce it; an instruction alone is not filesystem isolation.
+Parent assigns unique agent IDs and coverage units, records invocation usage, consolidates results, computes fingerprints, reconciles evidence and writes shared artifacts. Hunters and verifiers return results or write only isolated scratch directories. All target execution must satisfy [execution safety](execution-safety.md). Bind every result to the same source manifest hash and rehash before inspection; an instruction alone is not filesystem isolation.
 
-Do not fork the full audit conversation into hunters. Send minimum source scope, map facts, references and unit assignments. Never send other hunters' findings, expected answers, or prior audit verdicts as exemplars. Verifiers necessarily receive the candidate allegation and evidence locations; treat those as a hypothesis rather than a conclusion. Candidate verifiers must not be any hunter for that candidate's linked units. The final reviewer must not be any hunter or candidate verifier.
+Do not fork the full audit conversation into hunters. Send minimum source scope, map facts, references and unit assignments. Never send other hunters' findings, expected answers, or prior audit verdicts as exemplars. Verifiers necessarily receive the candidate allegation and evidence locations; treat those as a hypothesis rather than a conclusion. Candidate verifiers must not be any hunter for that candidate's linked units. The final reviewer must not be any hunter, candidate verifier or coverage critic. Planning and final critics use distinct fresh contexts; critics do not also hunt or verify.
 
-Fresh-context independence reduces anchoring; it is not a guarantee of correctness or model diversity. Record actual agent identities, roles and limits. Respect available concurrency and any strict user budget. Reserve at least one fresh candidate verifier slot plus a separate final reviewer before starting hunters; queue sequentially when slots are limited. If the candidate set exceeds validation budget, stop hunting and retain unvalidated candidates with `incomplete_reason`.
+Fresh-context independence reduces anchoring; it is not a guarantee of correctness or model diversity. Record actual agent identities, roles and limits. Respect available concurrency and any strict user budget. Reserve planning and final coverage critic invocations, at least one fresh candidate verifier plus a separate final reviewer before starting hunters; queue sequentially when slots are limited. If the candidate set exceeds validation budget, stop hunting and retain unvalidated candidates with `incomplete_reason`.
+
+## Coverage critic template (planning and final)
+
+```text
+Independently inspect selected scope <scope/exclusions> at manifest <SHA-256>.
+Recheck source identity before reading. This is <planning/final> criticism.
+You are not a hunter, candidate verifier or final reviewer. Do not adjudicate
+findings. Receive source and the input ledger snapshot/hash, not finding narratives.
+Start at privileged writes and sensitive reads and reconstruct alternate callers.
+Look for omitted queue/cron/background, retry/resume/recovery, direct/admin/human
+paths; hidden identities, context stores, tool/MCP surfaces and unseeded relevant
+attack classes. Compare source against the ledger, not only ledger rows with each
+other. Return inspected source locations and missing coverage units only, with
+subsystem, boundary, path variant, attack class, invariant and source evidence.
+Return changes_required if gaps are unresolved. Parent integrates units and hunts
+new paths; a fresh final critique must pass on the resulting current ledger.
+Return source_manifest_hash and the exact input ledger_hash. Do not edit shared
+artifacts. An empty missing_units list requires positive inspected source evidence.
+```
+
+Criticism is not proof of exhaustive coverage. Preserve discoveries in
+`coverage_reviews`; the parent links each discovery to an actual ledger unit.
+The validator prevents dropped discoveries and stale final review snapshots;
+independent source inspection remains necessary to discover an unseeded boundary.
 
 ## Hunter task template
 
@@ -30,7 +54,8 @@ Read <invariant IDs> and <relevant attack-class files>.
 Trace attacker-controlled source through final admission to effect/receipt.
 Inspect every downstream defense and alternate path relevant to these units.
 Separate identity, authorization, intentional action binding and atomic effect.
-Use bounded synthetic local checks; do not mutate external systems or target source.
+Recheck and return source_manifest_hash. Execute only under the full OS-enforced
+execution safety contract; otherwise use static evidence. Use synthetic checks; do not mutate external systems or target source.
 Return for each unit: inspected locations, controls, result, gaps and candidates.
 Candidate fields must satisfy the artifact contract, with disconfirming evidence.
 Do not write shared artifacts or assume other specialists covered a missing edge.
@@ -39,12 +64,14 @@ Do not write shared artifacts or assume other specialists covered a missing edge
 ## Candidate verifier template
 
 ```text
-Independently adjudicate candidate <ID> at <revision>.
+Independently adjudicate candidate <ID> at <manifest hash> and <candidate hash>.
+Recheck source identity. Return the exact verified_candidate_hash.
+Allegation fields remain immutable; propose candidate corrections for fresh verification.
 The allegation and evidence locations are hypotheses, not trusted interpretation.
 Inspect source independently from source through dispatch, handler and final sink.
 Look for controls that defeat the alleged result and for unmet attacker preconditions.
 Distinguish deterministic-proposal reachability from attacker-to-model reachability.
-Use a minimal bounded check when runtime behavior matters; disclose tests not run.
+Only execute under the full OS-enforced execution safety contract; disclose tests not run.
 Return confirmed / needs_validation / rejected, your own source evidence,
 validation evidence, defeating controls, preconditions and severity rationale
 (severity only if confirmed). For missing external facts state the exact fact
@@ -56,11 +83,13 @@ Do not edit shared artifacts. You did not hunt these units.
 
 ```text
 Review final findings and coverage at <revision> in a fresh context.
-You were neither hunter nor candidate verifier. Re-read final source claims,
+You were neither hunter, candidate verifier nor coverage critic. Re-read final source claims,
 effect evidence, root-cause fingerprints, severity and missing external facts.
 Check every admitted candidate has a disposition, no pending candidate appears
 as a finding, rejected candidates preserve counterevidence, and reports do not
-overclaim coverage. Validate revision/working-tree identity and report derivation.
+overclaim coverage. Rehash current source and bind source_manifest_hash. Check both coverage critiques
+and the final ledger hash, candidate hashes, immutable allegation fields, sandbox
+enforcement evidence, artifact isolation and report derivation.
 Return passed or changes_required plus exact record/unit corrections.
 Material source-to-effect changes require another candidate verification.
 ```

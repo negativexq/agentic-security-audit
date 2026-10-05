@@ -50,5 +50,6 @@
   },
   "@id": "https://github.com/negativexq/agentic-security-audit#source-code",
   "url": "https://github.com/negativexq/agentic-security-audit",
-  "codeRepository": "https://github.com/negativexq/agentic-security-audit"
+  "codeRepository": "https://github.com/negativexq/agentic-security-audit",
+  "license": "https://www.apache.org/licenses/LICENSE-2.0"
 }

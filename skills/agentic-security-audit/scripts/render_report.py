@@ -39,6 +39,10 @@ def render(bundle: dict) -> dict[str, str]:
                    f"Outstanding coverage units: {len(gaps)}. Pending candidates: {len(pending)}.", ""]
     report += [f"Repository: {md(metadata['repository'])}", "",
                f"Revision: {md(metadata['revision'])}. Working tree: {md(metadata['working_tree'])}.", "",
+               f"Source manifest SHA-256: {metadata['source_manifest_hash']}. Audit mode: {metadata['audit_mode']}.", "",
+               "## Target execution", "",
+               f"Policy: {metadata['execution_policy']}. Recorded sandboxed executions: {len(metadata['execution_runs'])}.", "",
+               "Sandbox records describe host-enforced controls; this validator does not create or attest isolation.", "",
                "## Selected scope", "", bullet_list(metadata["scope"]), "",
                "## Exclusions", "", bullet_list(metadata["exclusions"]), "",
                "## Coverage accounting", "", f"Ledger units: {len(units)}.", "",
@@ -57,6 +61,15 @@ def render(bundle: dict) -> dict[str, str]:
         report += ["", "No adjudicated findings recorded. This is not a security certification."]
     review = metadata["final_review"]
     budget = metadata["budget"]
+    report += ["", "## Independent coverage criticism", ""]
+    if not metadata["coverage_reviews"]:
+        report.append("No independent coverage critique recorded.")
+    for critique in metadata["coverage_reviews"]:
+        report += [f"- {critique['stage']}: {critique['status']} — {md(critique['critic_id'])}; missing units raised: {len(critique['missing_units'])}.",
+                   f"  Input ledger SHA-256: {critique['ledger_hash']}."]
+        report += [f"  - {location(loc)}" for loc in critique["evidence"]]
+        for gap in critique["missing_units"]:
+            report.append(f"  - {md(gap['subsystem'])} / {md(gap['path_variant'])}: {gap['unit_id'] or 'unresolved'}.")
     report += ["", "## Independent review", "",
                f"Independence: {metadata['independence']}. Final review: {review['status']}. Reviewer: {md(review['reviewer_id'] or 'none')}.", "",
                bullet_list(review["evidence"]), "",
@@ -77,6 +90,8 @@ def render(bundle: dict) -> dict[str, str]:
         details += [f"## {finding['id']} — {md(finding['title'])}", "",
                     f"Disposition: {finding['confidence']}. Severity: {finding['severity'] or 'not assigned'}.", ""]
         for label, key in [("Candidate", "candidate_id"), ("Fingerprint", "fingerprint"),
+                           ("Verified candidate SHA-256", "verified_candidate_hash"),
+                           ("Source manifest SHA-256", "source_manifest_hash"),
                            ("Invariant", "invariant"), ("Attacker", "attacker"), ("Affected principal", "principal"),
                            ("Execution identity", "execution_identity"), ("Affected resource", "affected_resource"),
                            ("Boundary", "boundary"), ("Control failure / alleged failure", "control_failure"),
@@ -108,8 +123,11 @@ def render(bundle: dict) -> dict[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--source-root", type=Path)
+    parser.add_argument("--offline", action="store_true", help="Render archived structural records; do not check current source")
     args = parser.parse_args()
-    errors = validate_directory(args.directory, check_reports=False)
+    errors = validate_directory(args.directory, check_reports=False, check_source=not args.offline,
+                                source_root=args.source_root)
     if errors:
         raise SystemExit("\n".join(errors))
     for name, content in render(load_bundle(args.directory)).items():

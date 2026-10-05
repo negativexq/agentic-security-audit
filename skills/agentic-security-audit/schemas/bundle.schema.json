@@ -1,14 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Agentic Security Audit v1 bundle",
+  "title": "Agentic Security Audit v2 bundle",
   "type": "object",
   "additionalProperties": false,
-  "required": ["metadata", "ledger", "candidates", "findings"],
+  "required": ["metadata", "ledger", "candidates", "findings", "source_manifest"],
   "properties": {
     "metadata": {"$ref": "#/$defs/metadata"},
     "ledger": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
     "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
-    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "source_manifest": {"$ref": "#/$defs/sourceManifest"}
   },
   "$defs": {
     "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
@@ -16,7 +17,8 @@
     "unitIDs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}},
     "invariant": {"type": "string", "pattern": "^AGENT-INV-00[1-9]$|^AGENT-INV-01[0-2]$"},
     "location": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["path", "line", "symbol", "summary"],
       "properties": {
         "path": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\:]+(?:/[^/\\\\:]+)*$"},
@@ -27,29 +29,56 @@
     },
     "locations": {"type": "array", "items": {"$ref": "#/$defs/location"}},
     "validation": {
-      "type": "object", "additionalProperties": false,
-      "required": ["method", "reference", "result", "limitations"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "reference", "result", "limitations", "execution_id"],
       "properties": {
         "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation"]},
         "reference": {"$ref": "#/$defs/text"},
         "result": {"$ref": "#/$defs/text"},
-        "limitations": {"$ref": "#/$defs/texts"}
+        "limitations": {"$ref": "#/$defs/texts"},
+        "execution_id": {"type": ["string", "null"], "minLength": 1}
       }
     },
     "finalReview": {
-      "type": "object", "additionalProperties": false,
-      "required": ["status", "reviewer_id", "evidence"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer_id", "evidence", "source_manifest_hash"],
       "properties": {
         "status": {"enum": ["pending", "passed", "changes_required", "unavailable"]},
         "reviewer_id": {"type": ["string", "null"], "minLength": 1},
-        "evidence": {"$ref": "#/$defs/texts"}
+        "evidence": {"$ref": "#/$defs/texts"},
+        "source_manifest_hash": {"anyOf": [{"type": "string", "pattern": "^[a-f0-9]{64}$"}, {"type": "null"}]}
       }
     },
     "metadata": {
-      "type": "object", "additionalProperties": false,
-      "required": ["schema_version", "run_id", "repository", "revision", "working_tree", "scope", "exclusions", "run_status", "incomplete_reason", "independence", "agents", "budget", "final_review", "evidence_slices", "limitations"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "run_id",
+        "repository",
+        "revision",
+        "working_tree",
+        "scope",
+        "exclusions",
+        "run_status",
+        "incomplete_reason",
+        "independence",
+        "agents",
+        "budget",
+        "final_review",
+        "evidence_slices",
+        "limitations",
+        "source_manifest_hash",
+        "audit_mode",
+        "allow_in_target_output",
+        "execution_policy",
+        "execution_runs",
+        "coverage_reviews"
+      ],
       "properties": {
-        "schema_version": {"const": 1},
+        "schema_version": {"const": 2},
         "run_id": {"$ref": "#/$defs/text"},
         "repository": {"$ref": "#/$defs/text"},
         "revision": {"$ref": "#/$defs/text"},
@@ -60,28 +89,32 @@
         "incomplete_reason": {"type": ["string", "null"], "minLength": 1},
         "independence": {"enum": ["enabled", "unavailable"]},
         "agents": {
-          "type": "array", "minItems": 1,
+          "type": "array",
+          "minItems": 1,
           "items": {
-            "type": "object", "additionalProperties": false,
-            "required": ["id", "role", "unit_ids"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "role", "unit_ids", "source_manifest_hash"],
             "properties": {
               "id": {"$ref": "#/$defs/text"},
-              "role": {"enum": ["parent", "hunter", "verifier", "reviewer"]},
-              "unit_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}}
+              "role": {"enum": ["parent", "hunter", "verifier", "reviewer", "coverage_critic"]},
+              "unit_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}},
+              "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
             }
           }
         },
         "budget": {
-          "type": "object", "additionalProperties": false, "required": ["max_invocations", "used_invocations"],
-          "properties": {
-            "max_invocations": {"type": ["integer", "null"], "minimum": 0},
-            "used_invocations": {"type": "integer", "minimum": 0}
-          }
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_invocations", "used_invocations"],
+          "properties": {"max_invocations": {"type": ["integer", "null"], "minimum": 0}, "used_invocations": {"type": "integer", "minimum": 0}}
         },
         "final_review": {"$ref": "#/$defs/finalReview"},
         "evidence_slices": {
-          "type": "array", "items": {
-            "type": "object", "additionalProperties": false,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
             "required": ["layer", "reference", "attempted", "passed", "limitations"],
             "properties": {
               "layer": {"enum": ["deterministic", "real_model", "operational"]},
@@ -92,12 +125,33 @@
             }
           }
         },
-        "limitations": {"$ref": "#/$defs/texts"}
+        "limitations": {"$ref": "#/$defs/texts"},
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "audit_mode": {"enum": ["full", "focused"]},
+        "allow_in_target_output": {"type": "boolean"},
+        "execution_policy": {"enum": ["static_only", "sandboxed"]},
+        "execution_runs": {"type": "array", "items": {"$ref": "#/$defs/execution"}},
+        "coverage_reviews": {"type": "array", "items": {"$ref": "#/$defs/coverageReview"}}
       }
     },
     "unit": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "subsystem", "boundary", "path_variant", "attack_class", "invariant", "priority", "status", "hunter_ids", "evidence", "result", "reason", "candidate_ids"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subsystem",
+        "boundary",
+        "path_variant",
+        "attack_class",
+        "invariant",
+        "priority",
+        "status",
+        "hunter_ids",
+        "evidence",
+        "result",
+        "reason",
+        "candidate_ids"
+      ],
       "properties": {
         "id": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"},
         "subsystem": {"$ref": "#/$defs/text"},
@@ -115,8 +169,30 @@
       }
     },
     "candidate": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "status", "fingerprint", "unit_ids", "title", "invariant", "root_cause", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "counterevidence"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "fingerprint",
+        "unit_ids",
+        "title",
+        "invariant",
+        "root_cause",
+        "source",
+        "control",
+        "sink",
+        "attacker",
+        "principal",
+        "execution_identity",
+        "affected_resource",
+        "boundary",
+        "control_failure",
+        "impact",
+        "preconditions",
+        "counterevidence",
+        "source_manifest_hash"
+      ],
       "properties": {
         "id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
         "status": {"enum": ["pending", "adjudicated"]},
@@ -136,12 +212,46 @@
         "control_failure": {"$ref": "#/$defs/text"},
         "impact": {"$ref": "#/$defs/text"},
         "preconditions": {"$ref": "#/$defs/texts"},
-        "counterevidence": {"$ref": "#/$defs/texts"}
+        "counterevidence": {"$ref": "#/$defs/texts"},
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },
     "finding": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "candidate_id", "unit_ids", "fingerprint", "title", "confidence", "severity", "severity_rationale", "invariant", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "verifier_id", "verifier_evidence", "validation", "counterevidence", "missing_fact", "validation_plan", "rejection_reason", "recommendation", "regression_assertion"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "candidate_id",
+        "unit_ids",
+        "fingerprint",
+        "title",
+        "confidence",
+        "severity",
+        "severity_rationale",
+        "invariant",
+        "source",
+        "control",
+        "sink",
+        "attacker",
+        "principal",
+        "execution_identity",
+        "affected_resource",
+        "boundary",
+        "control_failure",
+        "impact",
+        "preconditions",
+        "verifier_id",
+        "verifier_evidence",
+        "validation",
+        "counterevidence",
+        "missing_fact",
+        "validation_plan",
+        "rejection_reason",
+        "recommendation",
+        "regression_assertion",
+        "source_manifest_hash",
+        "verified_candidate_hash"
+      ],
       "properties": {
         "id": {"type": "string", "pattern": "^AGENT-[0-9]{3,}$"},
         "candidate_id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
@@ -171,7 +281,110 @@
         "validation_plan": {"type": ["string", "null"], "minLength": 1},
         "rejection_reason": {"type": ["string", "null"], "minLength": 1},
         "recommendation": {"type": ["string", "null"], "minLength": 1},
-        "regression_assertion": {"type": ["string", "null"], "minLength": 1}
+        "regression_assertion": {"type": ["string", "null"], "minLength": 1},
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "verified_candidate_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sourceManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "repository", "git_commit", "dirty", "diff_sha256", "files"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "repository": {"$ref": "#/$defs/text"},
+        "git_commit": {"type": ["string", "null"], "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"},
+        "dirty": {"type": ["boolean", "null"]},
+        "diff_sha256": {"anyOf": [{"type": "string", "pattern": "^[a-f0-9]{64}$"}, {"type": "null"}]},
+        "files": {
+          "type": "object",
+          "propertyNames": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\:]+(?:/[^/\\\\:]+)*$"},
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sha256", "size"],
+            "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "size": {"type": "integer", "minimum": 0}}
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "command", "source_manifest_hash", "enforcement", "evidence", "controls", "limits"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "command": {"$ref": "#/$defs/text"},
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "enforcement": {"$ref": "#/$defs/text"},
+        "evidence": {"allOf": [{"$ref": "#/$defs/texts"}, {"minItems": 1}]},
+        "controls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "network_disabled",
+            "source_read_only",
+            "scratch_only_writes",
+            "credentials_absent",
+            "artifacts_inaccessible",
+            "dependency_installation_disabled",
+            "synthetic_data_only",
+            "environment_allowlist"
+          ],
+          "properties": {
+            "network_disabled": {"const": true},
+            "source_read_only": {"const": true},
+            "scratch_only_writes": {"const": true},
+            "credentials_absent": {"const": true},
+            "artifacts_inaccessible": {"const": true},
+            "dependency_installation_disabled": {"const": true},
+            "synthetic_data_only": {"const": true},
+            "environment_allowlist": {"$ref": "#/$defs/texts"}
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cpu_seconds", "wall_seconds", "memory_bytes", "processes", "open_files", "disk_bytes"],
+          "properties": {
+            "cpu_seconds": {"type": "integer", "minimum": 1},
+            "wall_seconds": {"type": "integer", "minimum": 1},
+            "memory_bytes": {"type": "integer", "minimum": 1},
+            "processes": {"type": "integer", "minimum": 1},
+            "open_files": {"type": "integer", "minimum": 1},
+            "disk_bytes": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "missingUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subsystem", "boundary", "path_variant", "attack_class", "invariant", "unit_id", "evidence"],
+      "properties": {
+        "subsystem": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "path_variant": {"$ref": "#/$defs/text"},
+        "attack_class": {"type": "string", "pattern": "^0[1-9]$|^1[0-9]$|^20$"},
+        "invariant": {"$ref": "#/$defs/invariant"},
+        "unit_id": {"anyOf": [{"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}, {"type": "null"}]},
+        "evidence": {"allOf": [{"$ref": "#/$defs/locations"}, {"minItems": 1}]}
+      }
+    },
+    "coverageReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "critic_id", "source_manifest_hash", "ledger_snapshot", "ledger_hash", "evidence", "missing_units"],
+      "properties": {
+        "stage": {"enum": ["planning", "final"]},
+        "status": {"enum": ["passed", "changes_required"]},
+        "critic_id": {"$ref": "#/$defs/text"},
+        "source_manifest_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "ledger_snapshot": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
+        "ledger_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "evidence": {"allOf": [{"$ref": "#/$defs/locations"}, {"minItems": 1}]},
+        "missing_units": {"type": "array", "items": {"$ref": "#/$defs/missingUnit"}}
       }
     }
   }
