@@ -18,6 +18,7 @@ Links below are relative to the repository root. A website publisher should pres
 - [Execution safety](skills/agentic-security-audit/references/execution-safety.md): OS-enforced target execution, output isolation and frozen source identity.
 
 - [Security invariants](skills/agentic-security-audit/references/invariants.md): The 12 contracts used to guide source inspection.
+- [OWASP Agentic Top 10 crosswalk](skills/agentic-security-audit/references/owasp-agentic-crosswalk.md): ASI01–ASI10 routes, scope limits and coverage-planning guidance.
 - [Attack classes](skills/agentic-security-audit/references/attack-classes/INDEX.md): Routing for 20 scoped hunting guides.
 - [Orchestration](skills/agentic-security-audit/references/orchestration.md): Hunter roles, context isolation and verifier/reviewer prompts.
 - [Artifact contract](skills/agentic-security-audit/references/artifact-contract.md): Record fields, evidence requirements and helper commands.

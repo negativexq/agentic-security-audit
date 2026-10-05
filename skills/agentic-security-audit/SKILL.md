@@ -28,6 +28,8 @@ Write `architecture.md` and `authority-map.md`. Separate grounding (did the user
 
 ## 2. Plan and preserve coverage
 
+Use the [OWASP Agentic Top 10 crosswalk](references/owasp-agentic-crosswalk.md) during planning and coverage criticism to challenge omitted threat families. Respect selected scope and disclose partial dimensions; an ASI label or a linked guide does not establish coverage or a finding.
+
 Create `coverage-ledger.json` before hunting. A unit is **subsystem × concrete boundary/path variant × attack class × invariant**. Seed units from the maps, including alternate entry paths and transaction boundaries. Priority follows reachable effect and authority breadth; split units too large for an evidence-backed review.
 
 Use `unreviewed`, `in_progress`, `reviewed`, `candidate`, `blocked`, `deferred` or `not_applicable`. `reviewed` requires evidence and a review result; it never means secure. `not_applicable` requires an inspected absence with a reason. Missing deployment facts are `blocked`, not absent. Keep candidate IDs and rejected records so coverage is not rewritten after triage. Extend the ledger when new paths emerge; preserve existing IDs.

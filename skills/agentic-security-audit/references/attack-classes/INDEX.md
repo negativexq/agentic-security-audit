@@ -24,3 +24,5 @@ Load only classes reachable in the target. Each class defines a hunt, minimum ev
 | 18 | [Resource exhaustion](18-resource-exhaustion.md) | 009, 010 |
 | 19 | [Observability and gate integrity](19-observability-audit.md) | 012 |
 | 20 | [Fail-open behavior](20-fail-open-behavior.md) | 010 |
+
+For standards-oriented coverage planning, consult the [OWASP Agentic Top 10 crosswalk](../owasp-agentic-crosswalk.md). It maps ASI categories to these existing guides and records partial dimensions; class/invariant pairs in this index remain authoritative for ledger validation.

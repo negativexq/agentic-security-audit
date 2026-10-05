@@ -24,6 +24,7 @@ The skill is agent- and model-independent. Use it with any agent that can inspec
 - [Quick start](#quick-start)
 - [Installation and portability](#installation-and-portability)
 - [Audit workflow](#audit-workflow)
+- [OWASP Agentic Top 10 mapping](#owasp-agentic-top-10-mapping)
 - [Outputs and finding states](#outputs-and-finding-states)
 - [Artifact helpers](#artifact-helpers)
 - [Frequently asked questions](#frequently-asked-questions)
@@ -120,6 +121,12 @@ Five [specialist hunter roles](skills/agentic-security-audit/references/orchestr
 | Integration | MCP, delegation, tool metadata, budgets and evidence integrity. |
 
 Hunters receive scoped assignments without other hunters' finding narratives. Only the parent writes shared artifacts. Planning and final coverage critics use distinct fresh contexts and return omitted units without finding narratives. A candidate verifier must not have hunted the candidate; the final reviewer is distinct from hunters, verifiers and critics. Roles run in waves within the host's concurrency and the user's budget.
+
+## OWASP Agentic Top 10 mapping
+
+The [2026 crosswalk](skills/agentic-security-audit/references/owasp-agentic-crosswalk.md) maps ASI01–ASI10 to existing attack classes and invariants. It distinguishes direct hunting routes from partial scope and gives coverage critics concrete questions about omitted boundaries.
+
+Supply chain, communication guarantees, cascading failures, human trust and rogue-agent behavior have explicit limits in the mapping. This is a project-authored interpretation of [OWASP’s taxonomy](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/); it does not claim OWASP endorsement, full category coverage or compliance. The source-to-effect candidate gate and lifecycle invariants still govern findings.
 
 ## Outputs and finding states
 
