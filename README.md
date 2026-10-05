@@ -69,7 +69,7 @@ An unsafe proposal stopped by verified deterministic enforcement is containment 
 
 ## Profiles and finding philosophy
 
-**Find production-relevant failures, accept equivalent controls, and spend audit cost proportional to requested scope and assurance.** Missing best practices, broad-but-contained credentials, unusual architectures and unknown external facts are not vulnerabilities by themselves. Require a realistic source, crossed boundary, broken authoritative control and reachable effect with a meaningful consequence. Recommend the smallest effective fix at the actual enforcement point.
+**Find production-relevant failures, accept equivalent controls, and spend audit cost proportional to requested scope and assurance.** Missing best practices, broad-but-contained credentials, unusual architectures and unknown external facts are not vulnerabilities by themselves. Require a realistic source, concrete source-to-effect path, crossed boundary, broken authoritative control and meaningful consequence. Lite potential risks may be conditionally reachable under explicitly named necessary facts; Standard confirmed findings require established attacker and effect reachability. Recommend the smallest effective fix at the actual enforcement point.
 
 | | Lite | Standard |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ Keep the entire [`skills/agentic-security-audit`](skills/agentic-security-audit)
 
 If your agent supports native skill discovery, register this folder using that environment's own convention. Native registration is optional; direct loading of the instructions works without a product-specific command or directory layout. Adjust the paths in the usage examples to where you placed the folder.
 
-The package supplies instructions and artifact helpers. The host executes the investigation and provides agent isolation. Independent hunters, verifiers, coverage critics and the final reviewer require actual separate agent contexts. When these are unavailable, the skill supports sequential investigation, preserves pending candidates and reports the full audit as `incomplete`.
+The package supplies instructions and artifact helpers. The host executes the investigation and provides agent isolation. Independent hunters, verifiers, coverage critics and the final reviewer require actual separate agent contexts. When these are unavailable, the skill supports sequential investigation, preserves pending candidates and reports the Standard audit as `incomplete`.
 
 ## Audit workflow
 

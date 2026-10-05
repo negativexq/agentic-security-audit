@@ -42,10 +42,13 @@ broad-but-contained credentials, absent defense-in-depth, unusual patterns and
 unavailable external facts are not vulnerabilities by themselves.
 
 Admit a potential security risk only with a **realistic attacker-controlled source,
-crossed trust boundary, missing/broken authoritative control, reachable security
-effect and meaningful unauthorized or unintended consequence**. Identify
-attacker access, affected principal/resource, execution identity and preconditions.
-Separate attacker reachability from conditional effect reachability.
+concrete source-to-effect path across a trust boundary, missing/broken authoritative
+control and meaningful unauthorized or unintended consequence**. The effect must
+be reachable, or conditionally reachable under explicitly named necessary facts.
+Identify attacker access, affected principal/resource, execution identity and
+preconditions. Separate attacker reachability from effect reachability. Lite may
+report conditional potential risks; Standard `confirmed` requires both
+reachability axes to be established.
 
 Accept equivalent and compensating controls when they prevent the alleged effect
 on the actual path, including alternate callers, retries and concurrent execution.

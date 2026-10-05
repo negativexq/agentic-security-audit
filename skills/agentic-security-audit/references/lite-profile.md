@@ -108,8 +108,10 @@ Coverage limits and next action
 ```
 
 Use stable report-local `LITE-001` IDs for traceable hypotheses, including those
-whose necessary facts remain unknown. Count each hypothesis once; cross-reference
-its validation gap rather than counting it as another security issue. Purely
+whose necessary facts remain unknown. Conditional potential risks must name the
+necessary facts that would make the effect reachable and the checks needed to
+establish them; do not present those facts as established. Count each hypothesis
+once; cross-reference its validation gap rather than counting it as another security issue. Purely
 unknown external facts without a concrete source-to-effect hypothesis are scope
 limits, not potential findings. No potential risk receives Standard severity or
 the `confirmed`/`needs_validation` adjudication labels. A blocked malicious
