@@ -25,4 +25,3 @@ Links below are relative to the repository root. A website publisher should pres
 
 - [Source lineage](skills/agentic-security-audit/references/source-lineage.md): Writing, implementation and methodology sources used in the design.
 - [Project metadata](metadata/project.jsonld): Schema.org description of the instruction package and artifact helpers.
-- [Discovery guide](docs/DISCOVERY.md): Repository publication settings and future website metadata integration.

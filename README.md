@@ -211,7 +211,7 @@ No. Completion means the selected pass satisfied its coverage, adjudication, rev
 
 ### Where can I find the machine-readable project description?
 
-The [project metadata](metadata/project.jsonld) describes the package using Schema.org `SoftwareSourceCode`. The [documentation index](llms.txt) links to the source instructions and references. Publication settings and the distinction between repository files and deployed website metadata are in the [discovery guide](docs/DISCOVERY.md).
+The [project metadata](metadata/project.jsonld) describes the package using Schema.org `SoftwareSourceCode`. The [documentation index](llms.txt) links to the source instructions and references.
 
 ## Development checks
 
