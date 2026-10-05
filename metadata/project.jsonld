@@ -1,0 +1,36 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "agentic-security-audit",
+  "headline": "AI Agent Security Audit Skill",
+  "description": "An agent-independent, coverage-led security audit skill for tracing untrusted AI agent context into execution authority and real system effects.",
+  "inLanguage": "en",
+  "programmingLanguage": "Python",
+  "runtimePlatform": "Markdown instructions; optional artifact helpers require Python 3.10+ and jsonschema.",
+  "codeSampleType": "Markdown audit instructions and Python artifact helpers",
+  "keywords": [
+    "AI agent security audit",
+    "agentic security",
+    "execution authority",
+    "tool authorization",
+    "MCP security",
+    "prompt injection",
+    "RAG security",
+    "agent memory security",
+    "approval binding",
+    "resume safety",
+    "idempotency",
+    "independent verification"
+  ],
+  "about": [
+    {"@type": "Thing", "name": "AI agent security"},
+    {"@type": "Thing", "name": "Trust boundaries and execution authority"},
+    {"@type": "Thing", "name": "Model Context Protocol security"},
+    {"@type": "Thing", "name": "Retrieval-augmented generation and agent memory security"},
+    {"@type": "Thing", "name": "Stateful approval and replay safety"}
+  ],
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "AI agent developers, application security engineers and security reviewers"
+  }
+}

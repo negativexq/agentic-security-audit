@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agentic Security Audit v1 bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metadata", "ledger", "candidates", "findings"],
+  "properties": {
+    "metadata": {"$ref": "#/$defs/metadata"},
+    "ledger": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
+    "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "texts": {"type": "array", "items": {"$ref": "#/$defs/text"}, "uniqueItems": true},
+    "unitIDs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}},
+    "invariant": {"type": "string", "pattern": "^AGENT-INV-00[1-9]$|^AGENT-INV-01[0-2]$"},
+    "location": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "line", "symbol", "summary"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "pattern": "^[^/\\\\:]+(?:/[^/\\\\:]+)*$"},
+        "line": {"type": "integer", "minimum": 1},
+        "symbol": {"$ref": "#/$defs/text"},
+        "summary": {"$ref": "#/$defs/text"}
+      }
+    },
+    "locations": {"type": "array", "items": {"$ref": "#/$defs/location"}},
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "reference", "result", "limitations"],
+      "properties": {
+        "method": {"enum": ["static_trace", "local_fixture", "existing_test", "owner_observation"]},
+        "reference": {"$ref": "#/$defs/text"},
+        "result": {"$ref": "#/$defs/text"},
+        "limitations": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "finalReview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reviewer_id", "evidence"],
+      "properties": {
+        "status": {"enum": ["pending", "passed", "changes_required", "unavailable"]},
+        "reviewer_id": {"type": ["string", "null"], "minLength": 1},
+        "evidence": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "run_id", "repository", "revision", "working_tree", "scope", "exclusions", "run_status", "incomplete_reason", "independence", "agents", "budget", "final_review", "evidence_slices", "limitations"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "run_id": {"$ref": "#/$defs/text"},
+        "repository": {"$ref": "#/$defs/text"},
+        "revision": {"$ref": "#/$defs/text"},
+        "working_tree": {"$ref": "#/$defs/text"},
+        "scope": {"allOf": [{"$ref": "#/$defs/texts"}, {"minItems": 1}]},
+        "exclusions": {"$ref": "#/$defs/texts"},
+        "run_status": {"enum": ["complete", "incomplete"]},
+        "incomplete_reason": {"type": ["string", "null"], "minLength": 1},
+        "independence": {"enum": ["enabled", "unavailable"]},
+        "agents": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "role", "unit_ids"],
+            "properties": {
+              "id": {"$ref": "#/$defs/text"},
+              "role": {"enum": ["parent", "hunter", "verifier", "reviewer"]},
+              "unit_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"}}
+            }
+          }
+        },
+        "budget": {
+          "type": "object", "additionalProperties": false, "required": ["max_invocations", "used_invocations"],
+          "properties": {
+            "max_invocations": {"type": ["integer", "null"], "minimum": 0},
+            "used_invocations": {"type": "integer", "minimum": 0}
+          }
+        },
+        "final_review": {"$ref": "#/$defs/finalReview"},
+        "evidence_slices": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["layer", "reference", "attempted", "passed", "limitations"],
+            "properties": {
+              "layer": {"enum": ["deterministic", "real_model", "operational"]},
+              "reference": {"$ref": "#/$defs/text"},
+              "attempted": {"type": "integer", "minimum": 0},
+              "passed": {"type": "integer", "minimum": 0},
+              "limitations": {"$ref": "#/$defs/texts"}
+            }
+          }
+        },
+        "limitations": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "unit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "subsystem", "boundary", "path_variant", "attack_class", "invariant", "priority", "status", "hunter_ids", "evidence", "result", "reason", "candidate_ids"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^AUTH-[0-9]{3,}$"},
+        "subsystem": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "path_variant": {"$ref": "#/$defs/text"},
+        "attack_class": {"type": "string", "pattern": "^0[1-9]$|^1[0-9]$|^20$"},
+        "invariant": {"$ref": "#/$defs/invariant"},
+        "priority": {"enum": ["high", "medium", "low"]},
+        "status": {"enum": ["unreviewed", "in_progress", "reviewed", "candidate", "blocked", "deferred", "not_applicable"]},
+        "hunter_ids": {"$ref": "#/$defs/texts"},
+        "evidence": {"$ref": "#/$defs/locations"},
+        "result": {"type": ["string", "null"], "minLength": 1},
+        "reason": {"type": ["string", "null"], "minLength": 1},
+        "candidate_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"}}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "status", "fingerprint", "unit_ids", "title", "invariant", "root_cause", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "counterevidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
+        "status": {"enum": ["pending", "adjudicated"]},
+        "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "unit_ids": {"$ref": "#/$defs/unitIDs"},
+        "title": {"$ref": "#/$defs/text"},
+        "invariant": {"$ref": "#/$defs/invariant"},
+        "root_cause": {"$ref": "#/$defs/text"},
+        "source": {"$ref": "#/$defs/location"},
+        "control": {"$ref": "#/$defs/location"},
+        "sink": {"$ref": "#/$defs/location"},
+        "attacker": {"$ref": "#/$defs/text"},
+        "principal": {"$ref": "#/$defs/text"},
+        "execution_identity": {"$ref": "#/$defs/text"},
+        "affected_resource": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "control_failure": {"$ref": "#/$defs/text"},
+        "impact": {"$ref": "#/$defs/text"},
+        "preconditions": {"$ref": "#/$defs/texts"},
+        "counterevidence": {"$ref": "#/$defs/texts"}
+      }
+    },
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "candidate_id", "unit_ids", "fingerprint", "title", "confidence", "severity", "severity_rationale", "invariant", "source", "control", "sink", "attacker", "principal", "execution_identity", "affected_resource", "boundary", "control_failure", "impact", "preconditions", "verifier_id", "verifier_evidence", "validation", "counterevidence", "missing_fact", "validation_plan", "rejection_reason", "recommendation", "regression_assertion"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^AGENT-[0-9]{3,}$"},
+        "candidate_id": {"type": "string", "pattern": "^CAND-[0-9]{3,}$"},
+        "unit_ids": {"$ref": "#/$defs/unitIDs"},
+        "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "title": {"$ref": "#/$defs/text"},
+        "confidence": {"enum": ["confirmed", "needs_validation", "rejected"]},
+        "severity": {"enum": ["critical", "high", "medium", "low", "informational", null]},
+        "severity_rationale": {"type": ["string", "null"], "minLength": 1},
+        "invariant": {"$ref": "#/$defs/invariant"},
+        "source": {"$ref": "#/$defs/location"},
+        "control": {"$ref": "#/$defs/location"},
+        "sink": {"$ref": "#/$defs/location"},
+        "attacker": {"$ref": "#/$defs/text"},
+        "principal": {"$ref": "#/$defs/text"},
+        "execution_identity": {"$ref": "#/$defs/text"},
+        "affected_resource": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "control_failure": {"$ref": "#/$defs/text"},
+        "impact": {"$ref": "#/$defs/text"},
+        "preconditions": {"$ref": "#/$defs/texts"},
+        "verifier_id": {"$ref": "#/$defs/text"},
+        "verifier_evidence": {"allOf": [{"$ref": "#/$defs/locations"}, {"minItems": 1}]},
+        "validation": {"type": "array", "items": {"$ref": "#/$defs/validation"}},
+        "counterevidence": {"$ref": "#/$defs/texts"},
+        "missing_fact": {"type": ["string", "null"], "minLength": 1},
+        "validation_plan": {"type": ["string", "null"], "minLength": 1},
+        "rejection_reason": {"type": ["string", "null"], "minLength": 1},
+        "recommendation": {"type": ["string", "null"], "minLength": 1},
+        "regression_assertion": {"type": ["string", "null"], "minLength": 1}
+      }
+    }
+  }
+}

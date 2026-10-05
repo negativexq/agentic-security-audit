@@ -1,0 +1,28 @@
+# agentic-security-audit
+
+> An agent-independent, coverage-led security audit skill for tracing untrusted AI agent context into execution authority and real system effects.
+
+The package contains Markdown audit instructions, 12 security invariants, 20 attack classes, five specialist hunter roles, independent-verification guidance, JSON Schema and Python artifact helpers. It covers tool authorization, MCP, RAG, memory, approval binding, resume, idempotency, uncertain writes and evidence integrity. Python helpers require Python 3.10+ and jsonschema.
+
+A candidate needs attacker-controlled input, a crossed trust boundary, a broken authoritative control and a reachable security effect. Pending candidates are distinct from independently adjudicated findings. Only confirmed findings receive severity. A completed selected pass is not a security certification. Independent contexts are required for independent verification.
+
+Links below are relative to the repository root. A website publisher should preserve these routes or replace them with the actual public documentation URLs.
+
+## Project overview
+
+- [README](README.md): Definition, quick start, workflow, outputs and frequently asked questions.
+- [Audit instructions](skills/agentic-security-audit/SKILL.md): Scope selection, source-to-effect investigation and completion rules.
+
+## Audit references
+
+- [Security invariants](skills/agentic-security-audit/references/invariants.md): The 12 contracts used to guide source inspection.
+- [Attack classes](skills/agentic-security-audit/references/attack-classes/INDEX.md): Routing for 20 scoped hunting guides.
+- [Orchestration](skills/agentic-security-audit/references/orchestration.md): Hunter roles, context isolation and verifier/reviewer prompts.
+- [Artifact contract](skills/agentic-security-audit/references/artifact-contract.md): Record fields, evidence requirements and helper commands.
+- [Bundle schema](skills/agentic-security-audit/schemas/bundle.schema.json): Machine-readable structure for metadata, coverage, candidates and findings.
+
+## Optional
+
+- [Source lineage](skills/agentic-security-audit/references/source-lineage.md): Writing, implementation and methodology sources used in the design.
+- [Project metadata](metadata/project.jsonld): Schema.org description of the instruction package and artifact helpers.
+- [Discovery guide](docs/DISCOVERY.md): Repository publication settings and future website metadata integration.
