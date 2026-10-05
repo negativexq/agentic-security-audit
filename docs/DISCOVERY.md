@@ -4,7 +4,7 @@ This project uses a clear definition, task-oriented headings, direct FAQ answers
 
 ## Repository metadata
 
-Use these values when publishing the repository. They are prepared settings, not changes already applied to a remote service.
+Published repository: [negativexq/agentic-security-audit](https://github.com/negativexq/agentic-security-audit). The description and topics below describe its publication settings.
 
 **Repository name:** `agentic-security-audit`
 
@@ -14,7 +14,7 @@ Use these values when publishing the repository. They are prepared settings, not
 Agent-independent AI agent security audit skill for execution authority, MCP, RAG, memory, approvals and replay safety, with coverage-led independent verification.
 ```
 
-**Suggested topics:**
+**Repository topics:**
 
 ```text
 ai-security
@@ -42,7 +42,7 @@ Keep the same project name and core description across repository settings and p
 
 ## Machine-readable files
 
-[`metadata/project.jsonld`](../metadata/project.jsonld) uses Schema.org [`SoftwareSourceCode`](https://schema.org/SoftwareSourceCode) to describe the instruction package and Python helpers. It contains no guessed publication URL, repository URL, license or release version. Add `url`, `codeRepository` and an absolute `@id` once the corresponding public addresses are known; add other properties only when established.
+[`metadata/project.jsonld`](../metadata/project.jsonld) uses Schema.org [`SoftwareSourceCode`](https://schema.org/SoftwareSourceCode) to describe the instruction package and Python helpers. It includes the published GitHub URL as `url`, `codeRepository` and the base of its absolute `@id`. License and release version remain unspecified; add other properties only when established.
 
 On a documentation website, embed that JSON as an `application/ld+json` script on a page whose visible content describes the same project. A JSON-LD file committed to a repository is a reusable metadata source; it is not automatically embedded into the repository's rendered README or a website. The markup describes the package and does not establish eligibility for a particular search feature.
 

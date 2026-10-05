@@ -23,14 +23,32 @@
     "independent verification"
   ],
   "about": [
-    {"@type": "Thing", "name": "AI agent security"},
-    {"@type": "Thing", "name": "Trust boundaries and execution authority"},
-    {"@type": "Thing", "name": "Model Context Protocol security"},
-    {"@type": "Thing", "name": "Retrieval-augmented generation and agent memory security"},
-    {"@type": "Thing", "name": "Stateful approval and replay safety"}
+    {
+      "@type": "Thing",
+      "name": "AI agent security"
+    },
+    {
+      "@type": "Thing",
+      "name": "Trust boundaries and execution authority"
+    },
+    {
+      "@type": "Thing",
+      "name": "Model Context Protocol security"
+    },
+    {
+      "@type": "Thing",
+      "name": "Retrieval-augmented generation and agent memory security"
+    },
+    {
+      "@type": "Thing",
+      "name": "Stateful approval and replay safety"
+    }
   ],
   "audience": {
     "@type": "Audience",
     "audienceType": "AI agent developers, application security engineers and security reviewers"
-  }
+  },
+  "@id": "https://github.com/negativexq/agentic-security-audit#source-code",
+  "url": "https://github.com/negativexq/agentic-security-audit",
+  "codeRepository": "https://github.com/negativexq/agentic-security-audit"
 }
